@@ -72,7 +72,7 @@ class World {
         this.boundsWidth = boundsWidth;
         this.boundsHeight = boundsHeight;
 
-        this.quadTree = new QuadTree(this.boundsX, this.boundsY, this.boundsWidth, this.boundsHeight, this.maxObjects, this.maxLevels);
+        this.quadTree = QuadTree.create(this.boundsX, this.boundsY, this.boundsWidth, this.boundsHeight, this.maxObjects, this.maxLevels);
 
     } //new
 
@@ -981,30 +981,6 @@ class World {
     } //separateY
 
     /**
-     * Given a Group and a Pointer this will check to see which Group children overlap with the Pointer coordinates.
-     * Each child will be sent to the given callback for further processing.
-     * Note that the children are not checked for depth order, but simply if they overlap the Pointer or not.
-     *
-     * @method Phaser.Physics.Arcade#getObjectsUnderPointer
-     * @param {Phaser.Pointer} pointer - The Pointer to check.
-     * @param {Phaser.Group} group - The Group to check.
-     * @param {function} [callback] - A callback function that is called if the object overlaps with the Pointer. The callback will be sent two parameters: the Pointer and the Object that overlapped with it.
-     * @param {object} [callbackContext] - The context in which to run the callback.
-     * @return {PIXI.DisplayObject[]} An array of the Sprites from the Group that overlapped the Pointer coordinates.
-     */
-    getObjectsUnderPointer: function (pointer, group, callback, callbackContext)
-    {
-
-        if (group.length === 0 || !pointer.exists)
-        {
-            return;
-        }
-
-        return this.getObjectsAtLocation(pointer.x, pointer.y, group, callback, callbackContext, pointer);
-
-    },
-
-    /**
      * Given a Group and a location this will check to see which Group children overlap with the coordinates.
      * Each child will be sent to the given callback for further processing.
      * Note that the children are not checked for depth order, but simply if they overlap the coordinate or not.
@@ -1018,36 +994,35 @@ class World {
      * @param {object} [callbackArg] - An argument to pass to the callback.
      * @return {PIXI.DisplayObject[]} An array of the Sprites from the Group that overlapped the coordinates.
      */
-    getObjectsAtLocation: function (x, y, group, callback, callbackContext, callbackArg)
+    public function getObjectsAtLocation<T>(x:Float, y:Float, group:Group, ?callback:T->Body->Void, ?callbackArg:T):Array<Body>
     {
 
-        this.quadTree.clear();
+        quadTree.clear();
+        quadTree.reset(boundsX, boundsY, boundsWidth, boundsHeight, maxObjects, maxLevels);
+        quadTree.populate(group);
 
-        this.quadTree.reset(this.game.world.bounds.x, this.game.world.bounds.y, this.game.world.bounds.width, this.game.world.bounds.height, this.maxObjects, this.maxLevels);
+        var output:Array<Body> = [];
 
-        this.quadTree.populate(group);
+        var items = quadTree.retrieve(x, y, 1, 1);
 
-        var rect = new Phaser.Rectangle(x, y, 1, 1);
-        var output = [];
-
-        var items = this.quadTree.retrieve(rect);
-
-        for (var i = 0; i < items.length; i++)
+        for (i in 0...items.length)
         {
-            if (items[i].hitTest(x, y))
+            var item = items[i];
+
+            if (item.hitTest(x, y))
             {
-                if (callback)
+                if (callback != null)
                 {
-                    callback.call(callbackContext, callbackArg, items[i].sprite);
+                    callback(callbackArg, item);
                 }
 
-                output.push(items[i].sprite);
+                output.push(item.sprite);
             }
         }
 
         return output;
 
-    },
+    } //getObjectsAtLocation
 
     /**
      * Move the given display object towards the destination object at a steady velocity.
@@ -1064,60 +1039,22 @@ class World {
      * @param {number} [maxTime=0] - Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
      * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
      */
-    moveToObject: function (displayObject, destination, speed, maxTime)
+    public function moveToDestination(body:Body, destination:Body, speed:Float = 60, maxTime:Float = 0)
     {
 
-        if (speed === undefined) { speed = 60; }
-        if (maxTime === undefined) { maxTime = 0; }
-
-        var angle = Phaser.Point.angle(destination, displayObject);
+        var angle = Math.atan2(destination.x, destination.y, body.x, body.y);
 
         if (maxTime > 0)
         {
             //  We know how many pixels we need to move, but how fast?
-            speed = this.distanceBetween(displayObject, destination) / (maxTime / 1000);
+            speed = distanceBetween(body, destination) / (maxTime / 1000);
         }
 
-        displayObject.body.velocity.setToPolar(angle, speed);
+        body.setVelocityToPolar(angle, speed);
 
         return angle;
 
-    },
-
-    /**
-     * Move the given display object towards the pointer at a steady velocity. If no pointer is given it will use Phaser.Input.activePointer.
-     * If you specify a maxTime then it will adjust the speed (over-writing what you set) so it arrives at the destination in that number of seconds.
-     * Timings are approximate due to the way browser timers work. Allow for a variance of +- 50ms.
-     * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
-     * Note: The display object doesn't stop moving once it reaches the destination coordinates.
-     *
-     * @method Phaser.Physics.Arcade#moveToPointer
-     * @param {any} displayObject - The display object to move.
-     * @param {number} [speed=60] - The speed it will move, in pixels per second (default is 60 pixels/sec)
-     * @param {Phaser.Pointer} [pointer] - The pointer to move towards. Defaults to Phaser.Input.activePointer.
-     * @param {number} [maxTime=0] - Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
-     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
-     */
-    moveToPointer: function (displayObject, speed, pointer, maxTime)
-    {
-
-        if (speed === undefined) { speed = 60; }
-        pointer = pointer || this.game.input.activePointer;
-        if (maxTime === undefined) { maxTime = 0; }
-
-        var angle = this.angleToPointer(displayObject, pointer);
-
-        if (maxTime > 0)
-        {
-            //  We know how many pixels we need to move, but how fast?
-            speed = this.distanceToPointer(displayObject, pointer) / (maxTime / 1000);
-        }
-
-        displayObject.body.velocity.setToPolar(angle, speed);
-
-        return angle;
-
-    },
+    } //moveToDestination
 
     /**
      * Move the given display object towards the x/y coordinates at a steady velocity.
@@ -1135,25 +1072,22 @@ class World {
      * @param {number} [maxTime=0] - Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
      * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
      */
-    moveToXY: function (displayObject, x, y, speed, maxTime)
+    public function moveToXY(body:Body, x:Float, y:Float, speed:Float = 60, maxTime:Float = 0)
     {
 
-        if (speed === undefined) { speed = 60; }
-        if (maxTime === undefined) { maxTime = 0; }
-
-        var angle = Math.atan2(y - displayObject.y, x - displayObject.x);
+        var angle = Math.atan2(y - body.y, x - body.x);
 
         if (maxTime > 0)
         {
             //  We know how many pixels we need to move, but how fast?
-            speed = this.distanceToXY(displayObject, x, y) / (maxTime / 1000);
+            speed = distanceToXY(body, x, y) / (maxTime / 1000);
         }
 
-        displayObject.body.velocity.setToPolar(angle, speed);
+        body.setVelocityToPolar(angle, speed);
 
         return angle;
 
-    },
+    } //moveToXY
 
     /**
      * Given the angle (in degrees) and speed calculate the velocity and return it as a Point object, or set it to the given point object.
@@ -1165,15 +1099,16 @@ class World {
      * @param {Phaser.Point|object} [point] - The Point object in which the x and y properties will be set to the calculated velocity.
      * @return {Phaser.Point} - A Point where point.x contains the velocity x value and point.y contains the velocity y value.
      */
-    velocityFromAngle: function (angle, speed, point)
+    public function velocityFromAngle(angle:Float, speed:Float = 60, ?point:Point):Point
     {
 
-        if (speed === undefined) { speed = 60; }
-        point = point || new Phaser.Point();
+        if (point == null) point = new Point();
 
-        return point.setToPolar(angle, speed, true);
+        point.setToPolar(angle, speed, true);
 
-    },
+        return point;
+
+    } //velocityFromAngle
 
     /**
      * Given the rotation (in radians) and speed calculate the velocity and return it as a Point object, or set it to the given point object.
@@ -1185,15 +1120,16 @@ class World {
      * @param {Phaser.Point|object} [point] - The Point object in which the x and y properties will be set to the calculated velocity.
      * @return {Phaser.Point} - A Point where point.x contains the velocity x value and point.y contains the velocity y value.
      */
-    velocityFromRotation: function (rotation, speed, point)
+    public function velocityFromRotation(rotation:Float, speed:Float = 60, ?point:Point):Point
     {
 
-        if (speed === undefined) { speed = 60; }
-        point = point || new Phaser.Point();
+        if (point == null) point = new Point();
 
-        return point.setToPolar(rotation, speed);
+        point.setToPolar(rotation, speed);
 
-    },
+        return point;
+
+    } //velocityFromRotation
 
     /**
      * Given the rotation (in radians) and speed calculate the acceleration and return it as a Point object, or set it to the given point object.
@@ -1205,15 +1141,16 @@ class World {
      * @param {Phaser.Point|object} [point] - The Point object in which the x and y properties will be set to the calculated acceleration.
      * @return {Phaser.Point} - A Point where point.x contains the acceleration x value and point.y contains the acceleration y value.
      */
-    accelerationFromRotation: function (rotation, speed, point)
+    public function accelerationFromRotation(rotation:Float, speed:Float = 60, ?point:Point):Point
     {
 
-        if (speed === undefined) { speed = 60; }
-        point = point || new Phaser.Point();
+        if (point == null) point = new Point();
 
-        return point.setToPolar(rotation, speed);
+        point.setToPolar(rotation, speed);
 
-    },
+        return point;
+
+    } //accelerationFromRotation
 
     /**
      * Sets the acceleration.x/y property on the display object so it will move towards the target at the given speed (in pixels per second sq.)
@@ -1225,56 +1162,22 @@ class World {
      * @param {any} displayObject - The display object to move.
      * @param {any} destination - The display object to move towards. Can be any object but must have visible x/y properties.
      * @param {number} [speed=60] - The speed it will accelerate in pixels per second.
-     * @param {number} [xSpeedMax=500] - The maximum x velocity the display object can reach.
-     * @param {number} [ySpeedMax=500] - The maximum y velocity the display object can reach.
+     * @param {number} [xSpeedMax=1000] - The maximum x velocity the display object can reach.
+     * @param {number} [ySpeedMax=1000] - The maximum y velocity the display object can reach.
      * @return {number} The angle (in radians) that the object should be visually set to in order to match its new trajectory.
      */
-    accelerateToObject: function (displayObject, destination, speed, xSpeedMax, ySpeedMax)
+    public function accelerateToDestination(body:Body, destination:Body, speed:Float = 60, xSpeedMax:Float = 1000, ySpeedMax:Float = 1000):Float
     {
 
-        if (speed === undefined) { speed = 60; }
-        if (xSpeedMax === undefined) { xSpeedMax = 1000; }
-        if (ySpeedMax === undefined) { ySpeedMax = 1000; }
+        var angle = angleBetween(body, destination);
 
-        var angle = this.angleBetween(displayObject, destination);
-
-        displayObject.body.acceleration.setToPolar(angle, speed);
-        displayObject.body.maxVelocity.setTo(xSpeedMax, ySpeedMax);
+        body.setAccelerationToPolar(angle, speed);
+        body.maxVelocityX = xSpeedMax;
+        body.maxVelocityY = ySpeedMax;
 
         return angle;
 
-    },
-
-    /**
-     * Sets the acceleration.x/y property on the display object so it will move towards the target at the given speed (in pixels per second sq.)
-     * You must give a maximum speed value, beyond which the display object won't go any faster.
-     * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
-     * Note: The display object doesn't stop moving once it reaches the destination coordinates.
-     *
-     * @method Phaser.Physics.Arcade#accelerateToPointer
-     * @param {any} displayObject - The display object to move.
-     * @param {Phaser.Pointer} [pointer] - The pointer to move towards. Defaults to Phaser.Input.activePointer.
-     * @param {number} [speed=60] - The speed it will accelerate in pixels per second.
-     * @param {number} [xSpeedMax=500] - The maximum x velocity the display object can reach.
-     * @param {number} [ySpeedMax=500] - The maximum y velocity the display object can reach.
-     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new trajectory.
-     */
-    accelerateToPointer: function (displayObject, pointer, speed, xSpeedMax, ySpeedMax)
-    {
-
-        if (speed === undefined) { speed = 60; }
-        if (pointer === undefined) { pointer = this.game.input.activePointer; }
-        if (xSpeedMax === undefined) { xSpeedMax = 1000; }
-        if (ySpeedMax === undefined) { ySpeedMax = 1000; }
-
-        var angle = this.angleToPointer(displayObject, pointer);
-
-        displayObject.body.acceleration.setToPolar(angle, speed);
-        displayObject.body.maxVelocity.setTo(xSpeedMax, ySpeedMax);
-
-        return angle;
-
-    },
+    } //accelerateToDestination
 
     /**
      * Sets the acceleration.x/y property on the display object so it will move towards the x/y coordinates at the given speed (in pixels per second sq.)
@@ -1287,25 +1190,22 @@ class World {
      * @param {number} x - The x coordinate to accelerate towards.
      * @param {number} y - The y coordinate to accelerate towards.
      * @param {number} [speed=60] - The speed it will accelerate in pixels per second.
-     * @param {number} [xSpeedMax=500] - The maximum x velocity the display object can reach.
-     * @param {number} [ySpeedMax=500] - The maximum y velocity the display object can reach.
+     * @param {number} [xSpeedMax=1000] - The maximum x velocity the display object can reach.
+     * @param {number} [ySpeedMax=1000] - The maximum y velocity the display object can reach.
      * @return {number} The angle (in radians) that the object should be visually set to in order to match its new trajectory.
      */
-    accelerateToXY: function (displayObject, x, y, speed, xSpeedMax, ySpeedMax)
+    public function accelerateToXY(body:Body, x:Float, y:Float, speed:Float = 60, xSpeedMax:Float = 1000, ySpeedMax:Float = 1000):Float
     {
 
-        if (speed === undefined) { speed = 60; }
-        if (xSpeedMax === undefined) { xSpeedMax = 1000; }
-        if (ySpeedMax === undefined) { ySpeedMax = 1000; }
+        var angle = angleToXY(body, x, y);
 
-        var angle = this.angleToXY(displayObject, x, y);
-
-        displayObject.body.acceleration.setTo(angle, speed);
-        displayObject.body.maxVelocity.setTo(xSpeedMax, ySpeedMax);
+        body.setAccelerationToPolar(angle, speed);
+        body.maxVelocityX = xSpeedMax;
+        body.maxVelocityY = ySpeedMax;
 
         return angle;
 
-    },
+    } //accelerateToXY
 
     /**
      * Find the distance between two display objects (like Sprites).
@@ -1327,13 +1227,11 @@ class World {
      * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
      * @return {number} The distance between the source and target objects.
      */
-    distanceBetween: function (source, target, world, useCenter)
+    public function distanceBetween(source:Body, target:Body, world:Bool = false, useCenter:Bool = false):Float
     {
 
-        if (world === undefined) { world = false; }
-
-        var dx;
-        var dy;
+        var dx:Float;
+        var dy:Float;
 
         if (useCenter)
         {
@@ -1353,7 +1251,7 @@ class World {
 
         return Math.sqrt(dx * dx + dy * dy);
 
-    },
+    } //distanceBetween
 
     /**
      * Find the distance between a display object (like a Sprite) and the given x/y coordinates.
@@ -1371,45 +1269,15 @@ class World {
      * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default)
      * @return {number} The distance between the object and the x/y coordinates.
      */
-    distanceToXY: function (displayObject, x, y, world)
+    public function distanceToXY(body:Body, x:Float, y:Float, world:Bool = false):Float
     {
 
-        if (world === undefined) { world = false; }
-
-        var dx = (world) ? displayObject.world.x - x : displayObject.x - x;
-        var dy = (world) ? displayObject.world.y - y : displayObject.y - y;
+        var dx = (world) ? body.worldX - x : body.x - x;
+        var dy = (world) ? body.worldY - y : body.y - y;
 
         return Math.sqrt(dx * dx + dy * dy);
 
-    },
-
-    /**
-     * Find the distance between a display object (like a Sprite) and a Pointer. If no Pointer is given the Input.activePointer is used.
-     * The calculation is made from the display objects x/y coordinate. This may be the top-left if its anchor hasn't been changed.
-     * If you need to calculate from the center of a display object instead use {@link #distanceBetween} with the `useCenter` argument.
-     *
-     * The optional `world` argument allows you to return the result based on the Game Objects `world` property,
-     * instead of its `x` and `y` values. This is useful of the object has been nested inside an offset Group,
-     * or parent Game Object.
-     *
-     * @method Phaser.Physics.Arcade#distanceToPointer
-     * @param {any} displayObject - The Display Object to test from.
-     * @param {Phaser.Pointer} [pointer] - The Phaser.Pointer to test to. If none is given then Input.activePointer is used.
-     * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default)
-     * @return {number} The distance between the object and the Pointer.
-     */
-    distanceToPointer: function (displayObject, pointer, world)
-    {
-
-        if (pointer === undefined) { pointer = this.game.input.activePointer; }
-        if (world === undefined) { world = false; }
-
-        var dx = (world) ? displayObject.world.x - pointer.worldX : displayObject.x - pointer.worldX;
-        var dy = (world) ? displayObject.world.y - pointer.worldY : displayObject.y - pointer.worldY;
-
-        return Math.sqrt(dx * dx + dy * dy);
-
-    },
+    } //distanceToXY
 
 
     /**
@@ -1422,15 +1290,15 @@ class World {
      * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
      * @return {any} - The first target closest to the origin.
      */
-    closest: function (source, targets, world, useCenter)
+    public function closest(source:Body, targets:Array<Body>, world:Bool = false, useCenter:Bool = false):Body
     {
-        var min = Infinity;
-        var closest = null;
+        var min:Float = 9999999999;
+        var closest:Body = null;
 
-        for (var i = 0, len = targets.length; i < len; i++)
+        for (i in 0...targets.length)
         {
             var target = targets[i];
-            var distance = this.distanceBetween(source, target, world, useCenter);
+            var distance = distanceBetween(source, target, world, useCenter);
 
             if (distance < min)
             {
@@ -1440,7 +1308,8 @@ class World {
         }
 
         return closest;
-    },
+
+    } //closest
 
     /**
      * From a set of points or display objects, find the one farthest from a source point or object.
@@ -1452,12 +1321,12 @@ class World {
      * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
      * @return {any} - The target closest to the origin.
      */
-    farthest: function (source, targets, world, useCenter)
+    public function farthest(source:Body, targets:Array<Body>, world:Bool = false, useCenter:Bool = false):Body
     {
-        var max = -1;
-        var farthest = null;
+        var max:Float = -1;
+        var farthest:Body = null;
 
-        for (var i = 0, len = targets.length; i < len; i++)
+        for (i in 0...targets.length)
         {
             var target = targets[i];
             var distance = this.distanceBetween(source, target, world, useCenter);
@@ -1470,7 +1339,8 @@ class World {
         }
 
         return farthest;
-    },
+
+    } //farthest
 
     /**
      * Find the angle in radians between two display objects (like Sprites).
@@ -1485,21 +1355,19 @@ class World {
      * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
      * @return {number} The angle in radians between the source and target display objects.
      */
-    angleBetween: function (source, target, world)
+    public function angleBetween(source:Body, target:Body, world:Bool = false):Float
     {
-
-        if (world === undefined) { world = false; }
 
         if (world)
         {
-            return Phaser.Point.angle(target.world, source.world);
+            return Math.atan2(target.worldY - source.worldY, target.worldX - source.worldX);
         }
         else
         {
-            return Phaser.Point.angle(target, source);
+            return Math.atan2(target.y - source.y, target.x - source.x);
         }
 
-    },
+    } //angleBetween
 
     /**
      * Find the angle in radians between centers of two display objects (like Sprites).
@@ -1509,7 +1377,7 @@ class World {
      * @param {any} target - The Display Object to test to.
      * @return {number} The angle in radians between the source and target display objects.
      */
-    angleBetweenCenters: function (source, target)
+    public function angleBetweenCenters(source:Body, target:Float):Float
     {
 
         var dx = target.centerX - source.centerX;
@@ -1517,7 +1385,7 @@ class World {
 
         return Math.atan2(dy, dx);
 
-    },
+    } //angleBetweenCenters
 
     /**
      * Find the angle in radians between a display object (like a Sprite) and the given x/y coordinate.
@@ -1533,66 +1401,18 @@ class World {
      * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
      * @return {number} The angle in radians between displayObject.x/y to Pointer.x/y
      */
-    angleToXY: function (displayObject, x, y, world)
+    public function angleToXY(body:Body, x:Float, y:Float, world:Bool = false):Float
     {
-
-        if (world === undefined) { world = false; }
 
         if (world)
         {
-            return Math.atan2(y - displayObject.world.y, x - displayObject.world.x);
+            return Math.atan2(y - body.worldY, x - body.worldX);
         }
         else
         {
-            return Math.atan2(y - displayObject.y, x - displayObject.x);
+            return Math.atan2(y - body.y, x - body.x);
         }
 
-    },
+    } //angleToXY
 
-    /**
-     * Find the angle in radians between a display object (like a Sprite) and a Pointer, taking their x/y and center into account.
-     *
-     * The optional `world` argument allows you to return the result based on the Game Objects `world` property,
-     * instead of its `x` and `y` values. This is useful of the object has been nested inside an offset Group,
-     * or parent Game Object.
-     *
-     * @method Phaser.Physics.Arcade#angleToPointer
-     * @param {any} displayObject - The Display Object to test from.
-     * @param {Phaser.Pointer} [pointer] - The Phaser.Pointer to test to. If none is given then Input.activePointer is used.
-     * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
-     * @return {number} The angle in radians between displayObject.x/y to Pointer.x/y
-     */
-    angleToPointer: function (displayObject, pointer, world)
-    {
-
-        if (pointer === undefined) { pointer = this.game.input.activePointer; }
-        if (world === undefined) { world = false; }
-
-        if (world)
-        {
-            return Math.atan2(pointer.worldY - displayObject.world.y, pointer.worldX - displayObject.world.x);
-        }
-        else
-        {
-            return Math.atan2(pointer.worldY - displayObject.y, pointer.worldX - displayObject.x);
-        }
-
-    },
-
-    /**
-     * Find the angle in radians between a display object (like a Sprite) and a Pointer,
-     * taking their x/y and center into account relative to the world.
-     *
-     * @method Phaser.Physics.Arcade#worldAngleToPointer
-     * @param {any} displayObject - The DisplayObjerct to test from.
-     * @param {Phaser.Pointer} [pointer] - The Phaser.Pointer to test to. If none is given then Input.activePointer is used.
-     * @return {number} The angle in radians between displayObject.world.x/y to Pointer.worldX / worldY
-     */
-    worldAngleToPointer: function (displayObject, pointer)
-    {
-
-        return this.angleToPointer(displayObject, pointer, true);
-
-    }
-
-};
+}
