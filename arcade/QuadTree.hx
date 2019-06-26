@@ -68,8 +68,11 @@ class QuadTree
     */
     private var _empty:Array<Body> = [];
 
-    public function new(x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0) {
+    private var _pool:QuadTreePool = null;
 
+    public function new(?pool:QuadTreePool, x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0) {
+
+        _pool = pool != null ? pool : new QuadTreePool();
         reset(x, y, width, height, maxObjects, maxLevels, level);
 
     } //new
@@ -77,6 +80,7 @@ class QuadTree
     public function recycle():Void {
 
         clear();
+        _pool.recycle(this);
 
     } //recycle
 
@@ -142,16 +146,16 @@ class QuadTree
     {
 
         //  top right node
-        this.nodes[0] = QuadTree.create(this.boundsRight, this.boundsY, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
+        this.nodes[0] = _pool.create(this.boundsRight, this.boundsY, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
 
         //  top left node
-        this.nodes[1] = QuadTree.create(this.boundsX, this.boundsY, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
+        this.nodes[1] = _pool.create(this.boundsX, this.boundsY, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
 
         //  bottom left node
-        this.nodes[2] = QuadTree.create(this.boundsX, this.boundsBottom, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
+        this.nodes[2] = _pool.create(this.boundsX, this.boundsBottom, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
 
         //  bottom right node
-        this.nodes[3] = QuadTree.create(this.boundsRight, this.boundsBottom, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
+        this.nodes[3] = _pool.create(this.boundsRight, this.boundsBottom, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
 
     } //split
 
@@ -309,24 +313,32 @@ class QuadTree
 
     } //clear
 
+} //QuadTree
+
+class QuadTreePool {
+
+    public function new() {
+
+    } //new
+
 /// Recycling QuadTree objects
 
-    private static var _pool:Array<QuadTree> = [];
-    private static var _nextPoolIndex:Int = 0;
+    private var _pool:Array<QuadTree> = [];
+    private var _nextPoolIndex:Int = 0;
 
-    public static function clearPool():Void {
+    public function clearPool():Void {
 
         _pool = [];
         _nextPoolIndex = 0;
 
     } //clearPool
 
-    public static function create(x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0):QuadTree {
+    public function create(x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0):QuadTree {
 
         if (_nextPoolIndex == _pool.length) {
 
             // Create new
-            var quadTree = new QuadTree(x, y, width, height, maxObjects, maxLevels, level);
+            var quadTree = new QuadTree(this, x, y, width, height, maxObjects, maxLevels, level);
             _nextPoolIndex++;
             _pool.push(quadTree);
             return quadTree;
@@ -341,13 +353,34 @@ class QuadTree
 
     } //create
 
-    public static function recycleAll():Void {
+    public function recycleAll():Void {
 
         _nextPoolIndex = 0;
 
     } //recycleAll
 
-} //QuadTree
+    public function recycle(quadTree:QuadTree):Void {
+
+        var index = _pool.indexOf(quadTree);
+        if (index == -1) {
+            _pool.push(quadTree);
+        }
+        else if (index < _nextPoolIndex) {
+            // Move items after that are used, backward
+            while (index < _nextPoolIndex) {
+                _pool[index] = _pool[index + 1];
+                index++;
+            }
+            // Then replace free element with quadTree
+            // and move next pool index cursor to it
+            _nextPoolIndex--;
+            _pool[_nextPoolIndex] = quadTree;
+        }
+        // else already recycled?
+
+    } //recycle
+
+} //QuadTreePool
 
 /**
 * Javascript QuadTree

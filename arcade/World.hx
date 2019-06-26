@@ -12,7 +12,7 @@ package arcade;
 * @class Phaser.Physics.Arcade
 * @constructor
 */
-class World {
+class World #if ceramic extends ceramic.Entity #end {
 
     /** The World gravity X setting. Defaults to 0 (no gravity). */
     public var gravityX:Float = 0;
@@ -78,7 +78,7 @@ class World {
         this.boundsWidth = boundsWidth;
         this.boundsHeight = boundsHeight;
 
-        this.quadTree = QuadTree.create(this.boundsX, this.boundsY, this.boundsWidth, this.boundsHeight, this.maxObjects, this.maxLevels);
+        this.quadTree = new QuadTree(this.boundsX, this.boundsY, this.boundsWidth, this.boundsHeight, this.maxObjects, this.maxLevels);
 
     } //new
 
