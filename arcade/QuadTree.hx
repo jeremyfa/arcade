@@ -170,7 +170,7 @@ class QuadTree
         //  if we have subnodes ...
         if (this.nodes.length > 0)
         {
-            index = this.getIndex(body);
+            index = this.getIndex(body.left, body.top, body.right, body.bottom);
 
             if (index != -1)
             {
@@ -192,7 +192,8 @@ class QuadTree
             //  Add objects to subnodes
             while (i < this.objects.length)
             {
-                index = this.getIndex(this.objects[i]);
+                var item = this.objects[i];
+                index = this.getIndex(item.left, item.top, item.right, item.bottom);
 
                 if (index != -1)
                 {
@@ -215,34 +216,34 @@ class QuadTree
     * @param {Phaser.Rectangle|object} rect - The bounds in which to check.
     * @return {number} index - Index of the subnode (0-3), or -1 if rect cannot completely fit within a subnode and is part of the parent node.
     */
-    public function getIndex(body:Body):Int
+    public function getIndex(left:Float, top:Float, right:Float, bottom:Float):Int
     {
 
         //  default is that rect doesn't fit, i.e. it straddles the internal quadrants
         var index = -1;
 
-        if (body.x < this.boundsRight && body.right < this.boundsRight)
+        if (left < this.boundsRight && right < this.boundsRight)
         {
-            if (body.y < this.boundsBottom && body.bottom < this.boundsBottom)
+            if (top < this.boundsBottom && bottom < this.boundsBottom)
             {
                 //  rect fits within the top-left quadrant of this quadtree
                 index = 1;
             }
-            else if (body.y > this.boundsBottom)
+            else if (top > this.boundsBottom)
             {
                 //  rect fits within the bottom-left quadrant of this quadtree
                 index = 2;
             }
         }
-        else if (body.x > this.boundsRight)
+        else if (left > this.boundsRight)
         {
             //  rect can completely fit within the right quadrants
-            if (body.y < this.boundsBottom && body.bottom < this.boundsBottom)
+            if (top < this.boundsBottom && bottom < this.boundsBottom)
             {
                 //  rect fits within the top-right quadrant of this quadtree
                 index = 0;
             }
-            else if (body.y > this.boundsBottom)
+            else if (top > this.boundsBottom)
             {
                 //  rect fits within the bottom-right quadrant of this quadtree
                 index = 3;
@@ -260,27 +261,27 @@ class QuadTree
     * @param {Phaser.Sprite|Phaser.Rectangle} source - The source object to check the QuadTree against. Either a Sprite or Rectangle.
     * @return {array} - Array with all detected objects.
     */
-    public function retrieve(source:Body):Array<Body>
+    public function retrieve(left:Float, top:Float, right:Float, bottom:Float):Array<Body>
     {
 
         var returnObjects = this.objects;
 
-        var index = this.getIndex(source);
+        var index = this.getIndex(left, top, right, bottom);
 
         if (this.nodes.length > 0)
         {
             //  If rect fits into a subnode ..
             if (index != -1)
             {
-                returnObjects = returnObjects.concat(this.nodes[index].retrieve(source));
+                returnObjects = returnObjects.concat(this.nodes[index].retrieve(left, top, right, bottom));
             }
             else
             {
                 //  If rect does not fit into a subnode, check it against all subnodes (unrolled for speed)
-                returnObjects = returnObjects.concat(this.nodes[0].retrieve(source));
-                returnObjects = returnObjects.concat(this.nodes[1].retrieve(source));
-                returnObjects = returnObjects.concat(this.nodes[2].retrieve(source));
-                returnObjects = returnObjects.concat(this.nodes[3].retrieve(source));
+                returnObjects = returnObjects.concat(this.nodes[0].retrieve(left, top, right, bottom));
+                returnObjects = returnObjects.concat(this.nodes[1].retrieve(left, top, right, bottom));
+                returnObjects = returnObjects.concat(this.nodes[2].retrieve(left, top, right, bottom));
+                returnObjects = returnObjects.concat(this.nodes[3].retrieve(left, top, right, bottom));
             }
         }
 

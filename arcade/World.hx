@@ -725,11 +725,11 @@ class World {
      * @param {boolean} overlapOnly - Is this an overlap only check, or part of separation?
      * @return {float} Returns the amount of horizontal overlap between the two bodies.
      */
-    function getOverlapX(body1:Body, body2:Body, overlapOnly:Bool):Bool
+    function getOverlapX(body1:Body, body2:Body, overlapOnly:Bool = false):Float
     {
 
-        var overlap = 0;
-        var maxOverlap = body1.deltaAbsX() + body2.deltaAbsX() + this.overlapBias;
+        var overlap:Float = 0;
+        var maxOverlap:Float = body1.deltaAbsX() + body2.deltaAbsX() + this.overlapBias;
 
         if (body1.deltaX() == 0 && body2.deltaX() == 0)
         {
@@ -790,11 +790,11 @@ class World {
      * @param {boolean} overlapOnly - Is this an overlap only check, or part of separation?
      * @return {float} Returns the amount of vertical overlap between the two bodies.
      */
-    function getOverlapY(body1:Body, body2:Body, overlapOnly:Bool):Bool
+    function getOverlapY(body1:Body, body2:Body, overlapOnly:Bool = false):Float
     {
 
-        var overlap = 0;
-        var maxOverlap = body1.deltaAbsY() + body2.deltaAbsY() + this.overlapBias;
+        var overlap:Float = 0;
+        var maxOverlap:Float = body1.deltaAbsY() + body2.deltaAbsY() + this.overlapBias;
 
         if (body1.deltaY() == 0 && body2.deltaY() == 0)
         {
@@ -896,7 +896,7 @@ class World {
             //  This is special case code that handles things like vertically moving platforms you can ride
             if (body2.moves)
             {
-                body1.y += (body2.y - body2.prev.y) * body2.friction.y;
+                body1.y += (body2.y - body2.prevY) * body2.frictionY;
             }
         }
         else
@@ -907,7 +907,7 @@ class World {
             //  This is special case code that handles things like vertically moving platforms you can ride
             if (body1.moves)
             {
-                body2.y += (body1.y - body1.prev.y) * body1.friction.y;
+                body2.y += (body1.y - body1.prevY) * body1.frictionY;
             }
         }
 
@@ -967,7 +967,7 @@ class World {
             //  This is special case code that handles things like horizontal moving platforms you can ride
             if (body2.moves)
             {
-                body1.x += (body2.x - body2.prev.x) * body2.friction.x;
+                body1.x += (body2.x - body2.prevX) * body2.frictionX;
             }
         }
         else
@@ -978,7 +978,7 @@ class World {
             //  This is special case code that handles things like horizontal moving platforms you can ride
             if (body1.moves)
             {
-                body2.x += (body1.x - body1.prev.x) * body1.friction.x;
+                body2.x += (body1.x - body1.prevX) * body1.frictionX;
             }
         }
 
@@ -1023,7 +1023,7 @@ class World {
                     callback(callbackArg, item);
                 }
 
-                output.push(item.sprite);
+                output.push(item);
             }
         }
 
@@ -1049,7 +1049,8 @@ class World {
     public function moveToDestination(body:Body, destination:Body, speed:Float = 60, maxTime:Float = 0)
     {
 
-        var angle = Math.atan2(destination.x, destination.y, body.x, body.y);
+        //Math.atan2(y - body.y, x - body.x);
+        var angle = Math.atan2(destination.y - body.y, destination.x - body.x);
 
         if (maxTime > 0)
         {
@@ -1109,7 +1110,7 @@ class World {
     public function velocityFromAngle(angle:Float, speed:Float = 60, ?point:Point):Point
     {
 
-        if (point == null) point = new Point();
+        if (point == null) point = new Point(0, 0);
 
         point.setToPolar(angle, speed, true);
 
@@ -1130,7 +1131,7 @@ class World {
     public function velocityFromRotation(rotation:Float, speed:Float = 60, ?point:Point):Point
     {
 
-        if (point == null) point = new Point();
+        if (point == null) point = new Point(0, 0);
 
         point.setToPolar(rotation, speed);
 
@@ -1151,7 +1152,7 @@ class World {
     public function accelerationFromRotation(rotation:Float, speed:Float = 60, ?point:Point):Point
     {
 
-        if (point == null) point = new Point();
+        if (point == null) point = new Point(0, 0);
 
         point.setToPolar(rotation, speed);
 
@@ -1234,7 +1235,7 @@ class World {
      * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
      * @return {number} The distance between the source and target objects.
      */
-    public function distanceBetween(source:Body, target:Body, world:Bool = false, useCenter:Bool = false):Float
+    public function distanceBetween(source:Body, target:Body, useCenter:Bool = false):Float
     {
 
         var dx:Float;
@@ -1244,11 +1245,6 @@ class World {
         {
             dx = source.centerX - target.centerX;
             dy = source.centerY - target.centerY;
-        }
-        else if (world)
-        {
-            dx = source.world.x - target.world.x;
-            dy = source.world.y - target.world.y;
         }
         else
         {
@@ -1276,11 +1272,11 @@ class World {
      * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default)
      * @return {number} The distance between the object and the x/y coordinates.
      */
-    public function distanceToXY(body:Body, x:Float, y:Float, world:Bool = false):Float
+    inline public function distanceToXY(body:Body, x:Float, y:Float):Float
     {
 
-        var dx = (world) ? body.worldX - x : body.x - x;
-        var dy = (world) ? body.worldY - y : body.y - y;
+        var dx = body.x - x;
+        var dy = body.y - y;
 
         return Math.sqrt(dx * dx + dy * dy);
 
@@ -1305,7 +1301,7 @@ class World {
         for (i in 0...targets.length)
         {
             var target = targets[i];
-            var distance = distanceBetween(source, target, world, useCenter);
+            var distance = distanceBetween(source, target, useCenter);
 
             if (distance < min)
             {
@@ -1328,7 +1324,7 @@ class World {
      * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
      * @return {any} - The target closest to the origin.
      */
-    public function farthest(source:Body, targets:Array<Body>, world:Bool = false, useCenter:Bool = false):Body
+    public function farthest(source:Body, targets:Array<Body>, useCenter:Bool = false):Body
     {
         var max:Float = -1;
         var farthest:Body = null;
@@ -1336,7 +1332,7 @@ class World {
         for (i in 0...targets.length)
         {
             var target = targets[i];
-            var distance = this.distanceBetween(source, target, world, useCenter);
+            var distance = this.distanceBetween(source, target, useCenter);
 
             if (distance > max)
             {
@@ -1362,17 +1358,10 @@ class World {
      * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
      * @return {number} The angle in radians between the source and target display objects.
      */
-    public function angleBetween(source:Body, target:Body, world:Bool = false):Float
+    inline public function angleBetween(source:Body, target:Body):Float
     {
 
-        if (world)
-        {
-            return Math.atan2(target.worldY - source.worldY, target.worldX - source.worldX);
-        }
-        else
-        {
-            return Math.atan2(target.y - source.y, target.x - source.x);
-        }
+        return Math.atan2(target.y - source.y, target.x - source.x);
 
     } //angleBetween
 
@@ -1384,7 +1373,7 @@ class World {
      * @param {any} target - The Display Object to test to.
      * @return {number} The angle in radians between the source and target display objects.
      */
-    public function angleBetweenCenters(source:Body, target:Float):Float
+    public function angleBetweenCenters(source:Body, target:Body):Float
     {
 
         var dx = target.centerX - source.centerX;
@@ -1408,18 +1397,42 @@ class World {
      * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
      * @return {number} The angle in radians between displayObject.x/y to Pointer.x/y
      */
-    public function angleToXY(body:Body, x:Float, y:Float, world:Bool = false):Float
+    inline public function angleToXY(body:Body, x:Float, y:Float):Float
     {
 
-        if (world)
-        {
-            return Math.atan2(y - body.worldY, x - body.worldX);
-        }
-        else
-        {
-            return Math.atan2(y - body.y, x - body.x);
-        }
+        return Math.atan2(y - body.y, x - body.x);
 
     } //angleToXY
 
-}
+/// Internal
+
+    inline static function distance(x1:Float, y1:Float, x2:Float, y2:Float):Float {
+
+        var dx:Float = x2 - x1;
+        var dy:Float = y2 - y1;
+
+        return Math.sqrt(dx * dx + dy * dy);
+
+    } //distance
+
+    inline static function clamp(v:Float, min:Float, max:Float):Float
+    {
+
+        if (v < min)
+        {
+            return min;
+        }
+        else if (max < v)
+        {
+            return max;
+        }
+        else
+        {
+            return v;
+        }
+
+    } //clamp
+
+    inline static var HALF_PI:Float = 1.5707963267948966;
+
+} //World

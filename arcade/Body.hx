@@ -1279,6 +1279,16 @@ class Body #if ceramic extends ceramic.Entity #end
 
     } //setVelocityToPolar
 
+    inline public function setAccelerationToPolar(azimuth:Float, radius:Float = 1, asDegrees:Bool = false):Void
+    {
+
+        if (asDegrees) { azimuth = degToRad(azimuth); }
+
+        accelerationX = Math.cos(azimuth) * radius;
+        accelerationY = Math.sin(azimuth) * radius;
+
+    } //setAccelerationToPolar
+
     /**
      * Return true if the given x/y coordinates are within the Circle object.
      * @method Phaser.Circle.contains
