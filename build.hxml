@@ -1,1 +1,4 @@
 -cp .
+-cp test
+-main arcade.Test
+--interp

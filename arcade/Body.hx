@@ -14,8 +14,10 @@ package arcade;
 * @constructor
 * @param {Phaser.Sprite} sprite - The Sprite object this physics body belongs to.
 */
-class Body #if ceramic implements ceramic.Events #end
+class Body #if ceramic extends ceramic.Entity #end
 {
+
+    public var group:Group = null;
 
     /**
     * @property {boolean} enable - A disabled body won't be checked for any form of collision or overlap or have its pre/post updates run.
@@ -43,10 +45,6 @@ class Body #if ceramic implements ceramic.Events #end
     */
     public var radius:Float = 0;
 
-    // @property {Phaser.Point} offset - The offset of the Physics Body from the Sprite's texture.
-    public var offsetX:Float = 0;
-    public var offsetY:Float = 0;
-
     // @property {Phaser.Point} position - The position of the physics body, equivalent to ({@link #left}, {@link #top}).
     public var x:Float = 0;
     public var y:Float = 0;
@@ -69,10 +67,10 @@ class Body #if ceramic implements ceramic.Events #end
     public var rotation:Float = 0;
 
     /**
-    * @property {number} prevRotation - The previous rotation of the physics body, in degrees.
+    * @property {number} preRotation - The previous rotation of the physics body, in degrees.
     * @readonly
     */
-    public var prevRotation:Float = 0;
+    public var preRotation:Float = 0;
 
     /**
     * @property {number} width - The calculated width of the physics body.
@@ -85,18 +83,6 @@ class Body #if ceramic implements ceramic.Events #end
     * @readonly
     */
     public var height:Float = 0;
-
-    /**
-    * @property {number} sourceWidth - The un-scaled original size.
-    * @readonly
-    */
-    public var sourceWidth:Float = 0;
-
-    /**
-    * @property {number} sourceHeight - The un-scaled original size.
-    * @readonly
-    */
-    public var sourceHeight:Float = 0;
 
     /**
     * @property {number} halfWidth - The calculated width / 2 of the physics body.
@@ -164,8 +150,8 @@ class Body #if ceramic implements ceramic.Events #end
     * @property {Phaser.Point} worldBounce
     */
     public var worldBounce:Bool = false;
-    public var worldBounceX = 0;
-    public var worldBounceY = 0;
+    public var worldBounceX:Float = 0;
+    public var worldBounceY:Float = 0;
 
 
     /**
@@ -181,7 +167,7 @@ class Body #if ceramic implements ceramic.Events #end
     #if ceramic
     @event function worldBounds(body:Body, up:Bool, down:Bool, left:Bool, right:Bool);
     #else
-    public var onWorldBounds:Body->Bool->Bool->Bool->Bool->Void;
+    public var onWorldBounds:Body->Bool->Bool->Bool->Bool->Void = null;
     @:noCompletion inline public function emitWorldBounds(body:Body, up:Bool, down:Bool, left:Bool, right:Bool):Void {
         if (onWorldBounds != null) {
             onWorldBounds(body, up, down, left, right);
@@ -210,7 +196,7 @@ class Body #if ceramic implements ceramic.Events #end
     #if ceramic
     @event function collide(body1:Body, body2:Body);
     #else
-    public var onCollide:Body->Body->Void;
+    public var onCollide:Body->Body->Void = null;
     @:noCompletion inline public function emitCollide(body1:Body, body2:Body):Void {
         if (onCollide != null) {
             onCollide(body1, body2);
@@ -239,7 +225,7 @@ class Body #if ceramic implements ceramic.Events #end
     #if ceramic
     @event function overlap(body1:Body, body2:Body);
     #else
-    public var onOverlap:Body->Body->Void;
+    public var onOverlap:Body->Body->Void = null;
     @:noCompletion inline public function emitOverlap(body1:Body, body2:Body):Void {
         if (onOverlap != null) {
             onOverlap(body1, body2);
@@ -407,7 +393,7 @@ class Body #if ceramic implements ceramic.Events #end
     public var blockedUp:Bool = false;
     public var blockedDown:Bool = false;
     public var blockedLeft:Bool = false;
-    public var blockedRight:Bool = false;;
+    public var blockedRight:Bool = false;
 
     /**
     * If this is an especially small or fast moving object then it can sometimes skip over tilemap collisions if it moves through a tile in a step.
@@ -451,7 +437,7 @@ class Body #if ceramic implements ceramic.Events #end
     * @property {integer} moveTimer - Internal time used by the `moveTo` and `moveFrom` methods.
     * @private
     */
-    private var moveTimer:Int = 0;
+    private var moveTimer:Float = 0;
 
     /**
     * @property {integer} moveDistance - Internal distance value, used by the `moveTo` and `moveFrom` methods.
@@ -463,7 +449,7 @@ class Body #if ceramic implements ceramic.Events #end
     * @property {integer} moveDuration - Internal duration value, used by the `moveTo` and `moveFrom` methods.
     * @private
     */
-    private var moveDuration:Int = 0;
+    private var moveDuration:Float = 0;
 
     /**
     * @property {Phaser.Line} moveTarget - Set by the `moveTo` method, and updated each frame.
@@ -480,11 +466,11 @@ class Body #if ceramic implements ceramic.Events #end
     /**
     * @property {Phaser.Signal} onMoveComplete - Listen for the completion of `moveTo` or `moveFrom` events.
     */
-    this.onMoveComplete = new Phaser.Signal();
+    //this, this.velocityX, this.velocityY, percent
     #if ceramic
     @event function moveComplete(body:Body, fromCollision:Bool);
     #else
-    public var onMoveComplete:Body->Bool->Void;
+    public var onMoveComplete:Body->Bool->Void = null;
     @:noCompletion inline public function emitMoveComplete(body:Body, fromCollision:Bool):Void {
         if (onMoveComplete != null) {
             onMoveComplete(body, fromCollision);
@@ -495,7 +481,7 @@ class Body #if ceramic implements ceramic.Events #end
     /**
     * @property {function} movementCallback - Optional callback. If set, invoked during the running of `moveTo` or `moveFrom` events.
     */
-    public var movementCallback:Void->Void = null;
+    public var movementCallback:Body->Float->Float->Float->Bool = null;
 
     /**
     * @property {boolean} _reset - Internal cache var.
@@ -525,7 +511,7 @@ class Body #if ceramic implements ceramic.Events #end
     * @property {number} _dy - Internal cache var.
     * @private
     */
-    private var _dY:Float = 0;
+    private var _dy:Float = 0;
 
     public function new(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0) {
 
@@ -534,11 +520,9 @@ class Body #if ceramic implements ceramic.Events #end
         this.prevX = x;
         this.prevY = y;
         this.rotation = rotation;
-        this.prevRotation = rotation;
+        this.preRotation = rotation;
         this.width = width;
         this.height = height;
-        this.sourceWidth = width;
-        this.sourceHeight = height;
 
         updateHalfSize();
         updateCenter();
@@ -548,8 +532,8 @@ class Body #if ceramic implements ceramic.Events #end
     inline public function updateHalfSize()
     {
 
-        this.halfWidth = Math.abs(this.width * 0.5);
-        this.halfHeight = Math.abs(this.height * 0.5);
+        this.halfWidth = Math.floor(this.width * 0.5);
+        this.halfHeight = Math.floor(this.height * 0.5);
 
     } //updateHalfSize
 
@@ -584,7 +568,7 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#preUpdate
     * @protected
     */
-    inline function preUpdate(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0)
+    inline function preUpdate(world:World, x:Float, y:Float, width:Float, height:Float, rotation:Float = 0)
     {
 
         if (this.enable)
@@ -624,7 +608,7 @@ class Body #if ceramic implements ceramic.Events #end
 
             this.updateCenter();
 
-            this.rotation = this.sprite.angle;
+            this.rotation = rotation;
 
             this.preRotation = this.rotation;
 
@@ -636,29 +620,30 @@ class Body #if ceramic implements ceramic.Events #end
 
             if (this.moves)
             {
-                this.game.physics.arcade.updateMotion(this);
+                world.updateMotion(this);
 
-                this.newVelocity.set(this.velocity.x * this.game.time.physicsElapsed, this.velocity.y * this.game.time.physicsElapsed);
+                this.newVelocityX = this.velocityX * world.elapsed;
+                this.newVelocityY = this.velocityY * world.elapsed;
 
-                this.position.x += this.newVelocity.x;
-                this.position.y += this.newVelocity.y;
+                this.x += this.newVelocityX;
+                this.y += this.newVelocityY;
                 this.updateCenter();
 
                 if (this.x != this.prevX || this.y != this.prevY)
                 {
-                    this.angle = this.velocity.atan();
+                    this.angle = Math.atan2(this.velocityY, this.velocityX);
                 }
 
-                this.speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+                this.speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
 
                 //  Now the State update will throw collision checks at the Body
                 //  And finally we'll integrate the new position back to the Sprite in postUpdate
 
                 if (this.collideWorldBounds)
                 {
-                    if (this.checkWorldBounds() && this.onWorldBounds)
+                    if (this.checkWorldBounds(world))
                     {
-                        this.onWorldBounds.dispatch(this.sprite, this.blocked.up, this.blocked.down, this.blocked.left, this.blocked.right);
+                        this.emitWorldBounds(this, this.blockedUp, this.blockedDown, this.blockedLeft, this.blockedRight);
                     }
                 }
             }
@@ -670,7 +655,7 @@ class Body #if ceramic implements ceramic.Events #end
 
         }
 
-    },
+    } //preUpdate
 
     /**
     * Internal method.
@@ -678,41 +663,45 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#updateMovement
     * @protected
     */
-    updateMovement: function ()
+    inline function updateMovement(world:World):Bool
     {
 
-        var percent = 0;
-        var collided = (this.overlapX !== 0 || this.overlapY !== 0);
+        var percent:Float = 0;
+        var collided:Bool = (this.overlapX != 0 || this.overlapY != 0);
 
         //  Duration or Distance based?
 
         if (this.moveDuration > 0)
         {
-            this.moveTimer += this.game.time.elapsedMS;
+            this.moveTimer += world.elapsedMS;
 
             percent = this.moveTimer / this.moveDuration;
         }
         else
         {
-            this.moveTarget.end.set(this.position.x, this.position.y);
+            this.moveTarget.x2 = this.x;
+            this.moveTarget.y2 = this.y;
 
-            percent = this.moveTarget.length / this.moveDistance;
+            percent = this.moveTarget.length() / this.moveDistance;
         }
 
-        if (this.movementCallback)
+        var callbackResult:Bool = false;
+        if (this.movementCallback != null)
         {
-            var result = this.movementCallback.call(this.movementCallbackContext, this, this.velocity, percent);
+            callbackResult = this.movementCallback(this, this.velocityX, this.velocityY, percent);
         }
 
-        if (collided || percent >= 1 || (result !== undefined && result !== true))
+        var stop = true;
+
+        if (collided || percent >= 1 || callbackResult)
         {
             this.stopMovement((percent >= 1) || (this.stopVelocityOnCollide && collided));
-            return false;
+            stop = false;
         }
 
-        return true;
+        return stop;
 
-    },
+    } //updateMovement
 
     /**
     * If this Body is moving as a result of a call to `moveTo` or `moveFrom` (i.e. it
@@ -724,7 +713,7 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#stopMovement
     * @param {boolean} [stopVelocity] - Should the Body.velocity be set to zero?
     */
-    stopMovement: function (stopVelocity)
+    inline public function stopMovement(stopVelocity:Bool):Void
     {
 
         if (this.isMoving)
@@ -733,15 +722,16 @@ class Body #if ceramic implements ceramic.Events #end
 
             if (stopVelocity)
             {
-                this.velocity.set(0);
+                this.velocityX = 0;
+                this.velocityY = 0;
             }
 
             //  Send the Sprite this Body belongs to
             //  and a boolean indicating if it stopped because of a collision or not
-            this.onMoveComplete.dispatch(this.sprite, (this.overlapX !== 0 || this.overlapY !== 0));
+            emitMoveComplete(this, (this.overlapX != 0 || this.overlapY != 0));
         }
 
-    },
+    } //stopMovement
 
     /**
     * Internal method.
@@ -749,86 +739,89 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#postUpdate
     * @protected
     */
-    postUpdate: function ()
+    inline function postUpdate(world:World)
     {
 
         //  Only allow postUpdate to be called once per frame
-        if (!this.enable || !this.dirty)
+        if (this.enable && this.dirty)
         {
-            return;
-        }
 
-        //  Moving?
-        if (this.isMoving)
-        {
-            this.updateMovement();
-        }
-
-        this.dirty = false;
-
-        if (this.deltaX() < 0)
-        {
-            this.facing = Phaser.LEFT;
-        }
-        else if (this.deltaX() > 0)
-        {
-            this.facing = Phaser.RIGHT;
-        }
-
-        if (this.deltaY() < 0)
-        {
-            this.facing = Phaser.UP;
-        }
-        else if (this.deltaY() > 0)
-        {
-            this.facing = Phaser.DOWN;
-        }
-
-        if (this.moves)
-        {
-            this._dx = this.deltaX();
-            this._dy = this.deltaY();
-
-            if (this.deltaMax.x !== 0 && this._dx !== 0)
+            //  Moving?
+            if (this.isMoving)
             {
-                if (this._dx < 0 && this._dx < -this.deltaMax.x)
-                {
-                    this._dx = -this.deltaMax.x;
-                }
-                else if (this._dx > 0 && this._dx > this.deltaMax.x)
-                {
-                    this._dx = this.deltaMax.x;
-                }
+                this.updateMovement(world);
             }
 
-            if (this.deltaMax.y !== 0 && this._dy !== 0)
+            this.dirty = false;
+
+            if (this.deltaX() < 0)
             {
-                if (this._dy < 0 && this._dy < -this.deltaMax.y)
-                {
-                    this._dy = -this.deltaMax.y;
-                }
-                else if (this._dy > 0 && this._dy > this.deltaMax.y)
-                {
-                    this._dy = this.deltaMax.y;
-                }
+                this.facing = Direction.LEFT;
+            }
+            else if (this.deltaX() > 0)
+            {
+                this.facing = Direction.RIGHT;
             }
 
-            this.sprite.position.x += this._dx;
-            this.sprite.position.y += this._dy;
-            this._reset = true;
+            if (this.deltaY() < 0)
+            {
+                this.facing = Direction.UP;
+            }
+            else if (this.deltaY() > 0)
+            {
+                this.facing = Direction.DOWN;
+            }
+
+            if (this.moves)
+            {
+                this._dx = this.deltaX();
+                this._dy = this.deltaY();
+
+                if (this.deltaMaxX != 0 && this._dx != 0)
+                {
+                    if (this._dx < 0 && this._dx < -this.deltaMaxX)
+                    {
+                        this._dx = -this.deltaMaxX;
+                    }
+                    else if (this._dx > 0 && this._dx > this.deltaMaxX)
+                    {
+                        this._dx = this.deltaMaxX;
+                    }
+                }
+
+                if (this.deltaMaxY != 0 && this._dy != 0)
+                {
+                    if (this._dy < 0 && this._dy < -this.deltaMaxY)
+                    {
+                        this._dy = -this.deltaMaxY;
+                    }
+                    else if (this._dy > 0 && this._dy > this.deltaMaxY)
+                    {
+                        this._dy = this.deltaMaxY;
+                    }
+                }
+
+                // TODO
+                //this.sprite.x += this._dx;
+                //this.sprite.y += this._dy;
+
+                this._reset = true;
+            }
+
+            this.updateCenter();
+
+            if (this.allowRotation)
+            {
+                // TODO
+                //this.sprite.angle += this.deltaZ();
+            }
+
+            this.prevX = this.x;
+            this.prevY = this.y;
+
         }
 
-        this.updateCenter();
-
-        if (this.allowRotation)
-        {
-            this.sprite.angle += this.deltaZ();
-        }
-
-        this.prev.x = this.position.x;
-        this.prev.y = this.position.y;
-
-    },
+    } //postUpdate
 
     /**
     * Internal method.
@@ -837,49 +830,55 @@ class Body #if ceramic implements ceramic.Events #end
     * @protected
     * @return {boolean} True if the Body collided with the world bounds, otherwise false.
     */
-    checkWorldBounds: function ()
+    inline function checkWorldBounds(world:World)
     {
+        var posX = this.x;
+        var posY = this.y;
+        var boundsX = world.boundsX;
+        var boundsY = world.boundsY;
+        var boundsRight = boundsX + world.boundsWidth;
+        var boundsBottom = boundsY + world.boundsHeight;
+        var checkUp = world.checkCollisionUp;
+        var checkDown = world.checkCollisionDown;
+        var checkRight = world.checkCollisionRight;
+        var checkLeft = world.checkCollisionLeft;
 
-        var pos = this.position;
-        var bounds = this.game.physics.arcade.bounds;
-        var check = this.game.physics.arcade.checkCollision;
+        var bx = (this.worldBounce) ? -this.worldBounceX : -this.bounceX;
+        var by = (this.worldBounce) ? -this.worldBounceY : -this.bounceY;
 
-        var bx = (this.worldBounce) ? -this.worldBounce.x : -this.bounce.x;
-        var by = (this.worldBounce) ? -this.worldBounce.y : -this.bounce.y;
-
-        if (pos.x < bounds.x && check.left)
+        if (this.x < boundsX && checkLeft)
         {
-            pos.x = bounds.x;
-            this.velocity.x *= bx;
-            this.blocked.left = true;
-            this.blocked.none = false;
+            this.x = boundsX;
+            this.velocityX *= bx;
+            this.blockedLeft = true;
+            this.blockedNone = false;
         }
-        else if (this.right > bounds.right && check.right)
+        else if (this.right > boundsRight && checkRight)
         {
-            pos.x = bounds.right - this.width;
-            this.velocity.x *= bx;
-            this.blocked.right = true;
-            this.blocked.none = false;
-        }
-
-        if (pos.y < bounds.y && check.up)
-        {
-            pos.y = bounds.y;
-            this.velocity.y *= by;
-            this.blocked.up = true;
-            this.blocked.none = false;
-        }
-        else if (this.bottom > bounds.bottom && check.down)
-        {
-            pos.y = bounds.bottom - this.height;
-            this.velocity.y *= by;
-            this.blocked.down = true;
-            this.blocked.none = false;
+            this.x = boundsRight - this.width;
+            this.velocityX *= bx;
+            this.blockedRight = true;
+            this.blockedNone = false;
         }
 
-        return !this.blocked.none;
+        if (this.y < boundsY && checkUp)
+        {
+            this.y = boundsY;
+            this.velocityY *= by;
+            this.blockedUp = true;
+            this.blockedNone = false;
+        }
+        else if (this.bottom > boundsBottom && checkDown)
+        {
+            this.y = boundsBottom - this.height;
+            this.velocityY *= by;
+            this.blockedDown = true;
+            this.blockedNone = false;
+        }
 
-    },
+        return !this.blockedNone;
+
+    } //checkWorldBounds
 
     /**
     * Note: This method is experimental, and may be changed or removed in a future release.
@@ -906,55 +905,57 @@ class Body #if ceramic implements ceramic.Events #end
     * movement.
     *
     * @method Phaser.Physics.Arcade.Body#moveFrom
-    * @param  {integer} duration  - The duration of the movement, in ms.
-    * @param  {integer} [speed] - The speed of the movement, in pixels per second. If not provided `Body.speed` is used.
-    * @param  {integer} [direction] - The angle of movement. If not provided `Body.angle` is used.
+    * @param  {number} duration  - The duration of the movement, in seconds.
+    * @param  {number} [speed] - The speed of the movement, in pixels per second. If not provided `Body.speed` is used.
+    * @param  {number} [direction] - The angle of movement in degrees. If not provided `Body.angle` is used.
     * @return {boolean} True if the movement successfully started, otherwise false.
     */
-    moveFrom: function (duration, speed, direction)
+    public function moveFrom(duration:Float, speed:Float = -999999999.0, direction:Float = -999999999.0):Bool
     {
 
-        if (speed === undefined) { speed = this.speed; }
+        if (speed == -999999999.0) { speed = this.speed; }
 
-        if (speed === 0)
+        if (speed == 0)
         {
             return false;
         }
 
-        var angle;
+        var angle:Float;
 
-        if (direction === undefined)
+        if (direction == -999999999.0)
         {
             angle = this.angle;
-            direction = this.game.math.radToDeg(angle);
+            direction = radToDeg(angle);
         }
         else
         {
-            angle = this.game.math.degToRad(direction);
+            angle = degToRad(direction);
         }
 
         this.moveTimer = 0;
-        this.moveDuration = duration;
+        this.moveDuration = duration * 1000;
 
         //  Avoid sin/cos
-        if (direction === 0 || direction === 180)
+        if (direction == 0 || direction == 180)
         {
-            this.velocity.set(Math.cos(angle) * speed, 0);
+            this.velocityX = Math.cos(angle) * speed;
+            this.velocityY = 0;
         }
-        else if (direction === 90 || direction === 270)
+        else if (direction == 90 || direction == 270)
         {
-            this.velocity.set(0, Math.sin(angle) * speed);
+            this.velocityX = 0;
+            this.velocityY = Math.sin(angle) * speed;
         }
         else
         {
-            this.velocity.setToPolar(angle, speed);
+            this.setVelocityToPolar(angle, speed);
         }
 
         this.isMoving = true;
 
         return true;
 
-    },
+    } //moveFrom
 
     /**
     * Note: This method is experimental, and may be changed or removed in a future release.
@@ -980,130 +981,75 @@ class Body #if ceramic implements ceramic.Events #end
     * movement.
     *
     * @method Phaser.Physics.Arcade.Body#moveTo
-    * @param  {integer} duration - The duration of the movement, in ms.
-    * @param  {integer} distance - The distance, in pixels, the Body will move.
-    * @param  {integer} [direction] - The angle of movement. If not provided `Body.angle` is used.
+    * @param  {float} duration - The duration of the movement, in seconds.
+    * @param  {float} distance - The distance, in pixels, the Body will move.
+    * @param  {float} [direction] - The angle of movement. If not provided `Body.angle` is used.
     * @return {boolean} True if the movement successfully started, otherwise false.
     */
-    moveTo: function (duration, distance, direction)
+    public function moveTo(duration:Float, distance:Float, direction:Float = -999999999.0):Bool
     {
 
-        var speed = distance / (duration / 1000);
+        var speed = distance / duration;
 
-        if (speed === 0)
+        if (speed == 0)
         {
             return false;
         }
 
         var angle;
 
-        if (direction === undefined)
+        if (direction == -999999999.0)
         {
             angle = this.angle;
-            direction = this.game.math.radToDeg(angle);
+            direction = radToDeg(angle);
         }
         else
         {
-            angle = this.game.math.degToRad(direction);
+            angle = degToRad(direction);
         }
 
         distance = Math.abs(distance);
 
         this.moveDuration = 0;
-        this.moveDistance = distance;
+        this.moveDistance = Std.int(distance);
 
-        if (this.moveTarget === null)
+        if (this.moveTarget == null)
         {
-            this.moveTarget = new Phaser.Line();
-            this.moveEnd = new Phaser.Point();
+            this.moveTarget = new Line(0, 0, 0, 0);
+            this.moveEnd = new Point(0, 0);
         }
 
         this.moveTarget.fromAngle(this.x, this.y, angle, distance);
 
-        this.moveEnd.set(this.moveTarget.end.x, this.moveTarget.end.y);
+        this.moveEnd.x = this.moveTarget.x2;
+        this.moveEnd.y = this.moveTarget.y2;
 
-        this.moveTarget.setTo(this.x, this.y, this.x, this.y);
+        this.moveTarget.x1 = this.x;
+        this.moveTarget.y1 = this.y;
+        this.moveTarget.x2 = this.x;
+        this.moveTarget.y2 = this.y;
 
         //  Avoid sin/cos
-        if (direction === 0 || direction === 180)
+        if (direction == 0 || direction == 180)
         {
-            this.velocity.set(Math.cos(angle) * speed, 0);
+            this.velocityX = Math.cos(angle) * speed;
+            this.velocityY = 0;
         }
-        else if (direction === 90 || direction === 270)
+        else if (direction == 90 || direction == 270)
         {
-            this.velocity.set(0, Math.sin(angle) * speed);
+            this.velocityX = 0;
+            this.velocityY = Math.sin(angle) * speed;
         }
         else
         {
-            this.velocity.setToPolar(angle, speed);
+            this.setVelocityToPolar(angle, speed);
         }
 
         this.isMoving = true;
 
         return true;
 
-    },
-
-    /**
-    * You can modify the size of the physics Body to be any dimension you need.
-    * This allows you to make it smaller, or larger, than the parent Sprite. You
-    * can also control the x and y offset of the Body.
-    *
-    * The width, height, and offset arguments are relative to the Sprite
-    * _texture_ and are scaled with the Sprite's {@link Phaser.Sprite#scale}
-    * (but **not** the scale of any ancestors or the {@link Phaser.Camera#scale
-    * Camera scale}).
-    *
-    * For example: If you have a Sprite with a texture that is 80x100 in size,
-    * and you want the physics body to be 32x32 pixels in the middle of the
-    * texture, you would do:
-    *
-    * `setSize(32 / Math.abs(this.scale.x), 32 / Math.abs(this.scale.y), 24,
-    * 34)`
-    *
-    * Where the first two parameters are the new Body size (32x32 pixels)
-    * relative to the Sprite's scale. 24 is the horizontal offset of the Body
-    * from the top-left of the Sprites texture, and 34 is the vertical offset.
-    *
-    * If you've scaled a Sprite by altering its `width`, `height`, or `scale`
-    * and you want to position the Body relative to the Sprite's dimensions
-    * (which will differ from its texture's dimensions), you should divide these
-    * arguments by the Sprite's current scale:
-    *
-    * `setSize(32 / sprite.scale.x, 32 / sprite.scale.y)`
-    *
-    * Calling `setSize` on a Body that has already had `setCircle` will reset
-    * all of the Circle properties, making this Body rectangular again.
-    * @method Phaser.Physics.Arcade.Body#setSize
-    * @param {number} width - The width of the Body, relative to the Sprite's
-    * texture.
-    * @param {number} height - The height of the Body, relative to the Sprite's
-    * texture.
-    * @param {number} [offsetX] - The X offset of the Body from the left of the
-    * Sprite's texture.
-    * @param {number} [offsetY] - The Y offset of the Body from the top of the
-    * Sprite's texture.
-    */
-    setSize: function (width, height, offsetX, offsetY)
-    {
-
-        if (offsetX === undefined) { offsetX = this.offset.x; }
-        if (offsetY === undefined) { offsetY = this.offset.y; }
-
-        this.sourceWidth = width;
-        this.sourceHeight = height;
-        this.width = this.sourceWidth * this._sx;
-        this.height = this.sourceHeight * this._sy;
-        this.halfWidth = Math.floor(this.width / 2);
-        this.halfHeight = Math.floor(this.height / 2);
-        this.offset.setTo(offsetX, offsetY);
-
-        this.updateCenter();
-
-        this.isCircle = false;
-        this.radius = 0;
-
-    },
+    } //moveTo
 
     /**
     * Sets this Body as using a circle, of the given radius, for all collision detection instead of a rectangle.
@@ -1118,31 +1064,19 @@ class Body #if ceramic implements ceramic.Events #end
     *
     * @method Phaser.Physics.Arcade.Body#setCircle
     * @param {number} [radius] - The radius of the Body in pixels. Pass a value of zero / undefined, to stop the Body using a circle for collision.
-    * @param {number} [offsetX] - The X offset of the Body from the left of the Sprite's texture.
-    * @param {number} [offsetY] - The Y offset of the Body from the top of the Sprite's texture.
     */
-    setCircle: function (radius, offsetX, offsetY)
+    public function setCircle(radius:Float):Void
     {
-
-        if (offsetX === undefined) { offsetX = this.offset.x; }
-        if (offsetY === undefined) { offsetY = this.offset.y; }
 
         if (radius > 0)
         {
             this.isCircle = true;
             this.radius = radius;
 
-            this.sourceWidth = radius * 2;
-            this.sourceHeight = radius * 2;
+            this.width = radius * 2;
+            this.height = radius * 2;
 
-            this.width = this.sourceWidth * this._sx;
-            this.height = this.sourceHeight * this._sy;
-
-            this.halfWidth = Math.floor(this.width / 2);
-            this.halfHeight = Math.floor(this.height / 2);
-
-            this.offset.setTo(offsetX, offsetY);
-
+            this.updateHalfSize();
             this.updateCenter();
         }
         else
@@ -1150,7 +1084,7 @@ class Body #if ceramic implements ceramic.Events #end
             this.isCircle = false;
         }
 
-    },
+    } //setCircle
 
     /**
     * Resets all Body values (velocity, acceleration, rotation, etc)
@@ -1159,65 +1093,42 @@ class Body #if ceramic implements ceramic.Events #end
     * @param {number} x - The new x position of the Body.
     * @param {number} y - The new y position of the Body.
     */
-    reset: function (x, y)
+    inline public function reset(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0):Void
     {
 
         this.stop();
 
-        this.position.x = (x - (this.sprite.anchor.x * this.sprite.width)) + this.sprite.scale.x * this.offset.x;
-        this.position.x -= this.sprite.scale.x < 0 ? this.width : 0;
+        this.x = x;
+        this.y = y;
 
-        this.position.y = (y - (this.sprite.anchor.y * this.sprite.height)) + this.sprite.scale.y * this.offset.y;
-        this.position.y -= this.sprite.scale.y < 0 ? this.height : 0;
+        this.prevX = this.x;
+        this.prevY = this.y;
 
-        this.prev.x = this.position.x;
-        this.prev.y = this.position.y;
-
-        this.rotation = this.sprite.angle;
+        this.rotation = rotation;
         this.preRotation = this.rotation;
 
-        this.updateBounds();
-
+        this.updateSize(width, height);
         this.updateCenter();
 
-    },
+    } //reset
 
     /**
      * Sets acceleration, velocity, and {@link #speed} to 0.
      *
      * @method Phaser.Physics.Arcade.Body#stop
      */
-    stop: function ()
+    inline public function stop()
     {
 
-        this.velocity.set(0);
-        this.acceleration.set(0);
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.accelerationX = 0;
+        this.accelerationY = 0;
         this.speed = 0;
         this.angularVelocity = 0;
         this.angularAcceleration = 0;
 
-    },
-
-    /**
-    * Returns the bounds of this physics body.
-    *
-    * Only used internally by the World collision methods.
-    *
-    * @method Phaser.Physics.Arcade.Body#getBounds
-    * @param {object} obj - The object in which to set the bounds values.
-    * @return {object} The object that was given to this method.
-    */
-    getBounds: function (obj)
-    {
-
-        obj.x = this.x;
-        obj.y = this.y;
-        obj.right = this.right;
-        obj.bottom = this.bottom;
-
-        return obj;
-
-    },
+    } //stop
 
     /**
     * Tests if a world point lies within this Body.
@@ -1227,12 +1138,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @param {number} y - The world y coordinate to test.
     * @return {boolean} True if the given coordinates are inside this Body, otherwise false.
     */
-    hitTest: function (x, y)
+    inline public function hitTest(x:Float, y:Float):Bool
     {
 
-        return (this.isCircle) ? Phaser.Circle.contains(this, x, y) : Phaser.Rectangle.contains(this, x, y);
+        return (this.isCircle) ? circleContains(this, x, y) : rectangleContains(this, x, y);
 
-    },
+    } //hitTest
 
     /**
     * Returns true if the bottom of this Body is in contact with either the world bounds or a tile.
@@ -1240,12 +1151,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#onFloor
     * @return {boolean} True if in contact with either the world bounds or a tile.
     */
-    onFloor: function ()
+    inline public function isOnFloor():Bool
     {
 
-        return this.blocked.down;
+        return this.blockedDown;
 
-    },
+    } //isOnFloor
 
     /**
     * Returns true if the top of this Body is in contact with either the world bounds or a tile.
@@ -1253,12 +1164,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#onCeiling
     * @return {boolean} True if in contact with either the world bounds or a tile.
     */
-    onCeiling: function ()
+    inline public function isOnCeiling():Bool
     {
 
-        return this.blocked.up;
+        return this.blockedUp;
 
-    },
+    } //isOnCeiling
 
     /**
     * Returns true if either side of this Body is in contact with either the world bounds or a tile.
@@ -1266,12 +1177,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#onWall
     * @return {boolean} True if in contact with either the world bounds or a tile.
     */
-    onWall: function ()
+    inline public function isOnWall():Bool
     {
 
-        return (this.blocked.left || this.blocked.right);
+        return (this.blockedLeft || this.blockedRight);
 
-    },
+    } //isOnWall
 
     /**
     * Returns the absolute delta x value.
@@ -1279,12 +1190,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#deltaAbsX
     * @return {number} The absolute delta value.
     */
-    deltaAbsX: function ()
+    inline public function deltaAbsX():Float
     {
 
         return (this.deltaX() > 0 ? this.deltaX() : -this.deltaX());
 
-    },
+    } //deltaAbsX
 
     /**
     * Returns the absolute delta y value.
@@ -1292,12 +1203,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#deltaAbsY
     * @return {number} The absolute delta value.
     */
-    deltaAbsY: function ()
+    inline public function deltaAbsY():Float
     {
 
         return (this.deltaY() > 0 ? this.deltaY() : -this.deltaY());
 
-    },
+    } //deltaAbsY
 
     /**
     * Returns the delta x value. The difference between Body.x now and in the previous step.
@@ -1305,12 +1216,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#deltaX
     * @return {number} The delta value. Positive if the motion was to the right, negative if to the left.
     */
-    deltaX: function ()
+    inline public function deltaX():Float
     {
 
-        return this.position.x - this.prev.x;
+        return this.x - this.prevX;
 
-    },
+    } //deltaX
 
     /**
     * Returns the delta y value. The difference between Body.y now and in the previous step.
@@ -1318,12 +1229,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#deltaY
     * @return {number} The delta value. Positive if the motion was downwards, negative if upwards.
     */
-    deltaY: function ()
+    inline public function deltaY():Float
     {
 
-        return this.position.y - this.prev.y;
+        return this.y - this.prevY;
 
-    },
+    } //deltaY
 
     /**
     * Returns the delta z value. The difference between Body.rotation now and in the previous step.
@@ -1331,12 +1242,12 @@ class Body #if ceramic implements ceramic.Events #end
     * @method Phaser.Physics.Arcade.Body#deltaZ
     * @return {number} The delta value. Positive if the motion was clockwise, negative if anti-clockwise.
     */
-    deltaZ: function ()
+    inline public function deltaZ():Float
     {
 
         return this.rotation - this.preRotation;
 
-    },
+    } //deltaZ
 
     /**
     * Destroys this Body.
@@ -1346,192 +1257,102 @@ class Body #if ceramic implements ceramic.Events #end
     *
     * @method Phaser.Physics.Arcade.Body#destroy
     */
-    destroy: function ()
+    #if ceramic override #end public function destroy():Void
     {
 
-        if (this.sprite.parent && this.sprite.parent instanceof Phaser.Group)
-        {
-            this.sprite.parent.removeFromHash(this.sprite);
+        if (group != null) {
+            group.remove(this);
+            group = null;
         }
 
-        this.sprite.body = null;
-        this.sprite = null;
+    } //destroy
 
-    }
+/// Helpers
 
-};
-
-/**
-* @name Phaser.Physics.Arcade.Body#left
-* @property {number} left - The x position of the Body. The same as `Body.x`.
-*/
-Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, 'left', {
-
-    get: function ()
+    inline public function setVelocityToPolar(azimuth:Float, radius:Float = 1, asDegrees:Bool = false):Void
     {
 
-        return this.position.x;
+        if (asDegrees) { azimuth = degToRad(azimuth); }
 
-    }
+        velocityX = Math.cos(azimuth) * radius;
+        velocityY = Math.sin(azimuth) * radius;
 
-});
+    } //setVelocityToPolar
 
-/**
-* @name Phaser.Physics.Arcade.Body#right
-* @property {number} right - The right value of this Body (same as Body.x + Body.width)
-* @readonly
-*/
-Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, 'right', {
-
-    get: function ()
+    /**
+     * Return true if the given x/y coordinates are within the Circle object.
+     * @method Phaser.Circle.contains
+     * @param {Phaser.Circle} a - The Circle to be checked.
+     * @param {number} x - The X value of the coordinate to test.
+     * @param {number} y - The Y value of the coordinate to test.
+     * @return {boolean} True if the coordinates are within this circle, otherwise false.
+     */
+    inline static function circleContains(body:Body, x:Float, y:Float):Bool
     {
 
-        return this.position.x + this.width;
-
-    }
-
-});
-
-/**
-* @name Phaser.Physics.Arcade.Body#top
-* @property {number} top - The y position of the Body. The same as `Body.y`.
-*/
-Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, 'top', {
-
-    get: function ()
-    {
-
-        return this.position.y;
-
-    }
-
-});
-
-/**
-* @name Phaser.Physics.Arcade.Body#bottom
-* @property {number} bottom - The bottom value of this Body (same as Body.y + Body.height)
-* @readonly
-*/
-Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, 'bottom', {
-
-    get: function ()
-    {
-
-        return this.position.y + this.height;
-
-    }
-
-});
-
-/**
-* @name Phaser.Physics.Arcade.Body#x
-* @property {number} x - The x position.
-*/
-Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, 'x', {
-
-    get: function ()
-    {
-
-        return this.position.x;
-
-    },
-
-    set: function (value)
-    {
-
-        this.position.x = value;
-    }
-
-});
-
-/**
-* @name Phaser.Physics.Arcade.Body#y
-* @property {number} y - The y position.
-*/
-Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, 'y', {
-
-    get: function ()
-    {
-
-        return this.position.y;
-
-    },
-
-    set: function (value)
-    {
-
-        this.position.y = value;
-
-    }
-
-});
-
-/**
-* Render Sprite Body.
-*
-* @method Phaser.Physics.Arcade.Body#render
-* @param {object} context - The context to render to.
-* @param {Phaser.Physics.Arcade.Body} body - The Body to render the info of.
-* @param {string} [color='rgba(0,255,0,0.4)'] - color of the debug info to be rendered. (format is css color string).
-* @param {boolean} [filled=true] - Render the objected as a filled (default, true) or a stroked (false)
-* @param {number} [lineWidth=1] - The width of the stroke when unfilled.
-*/
-Phaser.Physics.Arcade.Body.render = function (context, body, color, filled, lineWidth)
-{
-
-    if (filled === undefined) { filled = true; }
-
-    color = color || 'rgba(0,255,0,0.4)';
-
-    context.fillStyle = color;
-    context.strokeStyle = color;
-    context.lineWidth = lineWidth || 1;
-
-    if (body.isCircle)
-    {
-        context.beginPath();
-        context.arc(body.center.x - body.game.camera.x, body.center.y - body.game.camera.y, body.halfWidth, 0, 2 * Math.PI);
-
-        if (filled)
+        //  Check if x/y are within the bounds first
+        if (body.radius > 0 && x >= body.left && x <= body.right && y >= body.top && y <= body.bottom)
         {
-            context.fill();
+            var dx = (body.x - x) * (body.x - x);
+            var dy = (body.y - y) * (body.y - y);
+
+            return (dx + dy) <= (body.radius * body.radius);
         }
         else
         {
-            context.stroke();
+            return false;
         }
-    }
-    else
-    if (filled)
+
+    } //circleContains
+
+    /**
+     * Determines whether the specified coordinates are contained within the region defined by this Rectangle object.
+     * @method Phaser.Rectangle.contains
+     * @param {Phaser.Rectangle} a - The Rectangle object.
+     * @param {number} x - The x coordinate of the point to test.
+     * @param {number} y - The y coordinate of the point to test.
+     * @return {boolean} A value of true if the Rectangle object contains the specified point; otherwise false.
+     */
+    inline static function rectangleContains(body:Body, x:Float, y:Float):Bool
     {
-        context.fillRect(body.position.x - body.game.camera.x, body.position.y - body.game.camera.y, body.width, body.height);
+
+        if (body.width <= 0 || body.height <= 0)
+        {
+            return false;
+        }
+
+        return (x >= body.x && x < body.right && y >= body.y && y < body.bottom);
+
+    } //rectangleContains
+
+/// Additional getters
+
+    public var left(get,never):Float;
+    inline function get_left():Float {
+        return x;
     }
-    else
-    {
-        context.strokeRect(body.position.x - body.game.camera.x, body.position.y - body.game.camera.y, body.width, body.height);
+
+    public var top(get,never):Float;
+    inline function get_top():Float {
+        return y;
     }
 
-};
+    public var right(get,never):Float;
+    inline function get_right():Float {
+        return x + width;
+    }
 
-/**
-* Render Sprite Body Physics Data as text.
-*
-* @method Phaser.Physics.Arcade.Body#renderBodyInfo
-* @param {Phaser.Physics.Arcade.Body} body - The Body to render the info of.
-* @param {number} x - X position of the debug info to be rendered.
-* @param {number} y - Y position of the debug info to be rendered.
-* @param {string} [color='rgb(255,255,255)'] - color of the debug info to be rendered. (format is css color string).
-*/
-Phaser.Physics.Arcade.Body.renderBodyInfo = function (debug, body)
-{
+    public var bottom(get,never):Float;
+    inline function get_bottom():Float {
+        return y + top;
+    }
 
-    debug.line('x: ' + body.x.toFixed(2), 'y: ' + body.y.toFixed(2), 'width: ' + body.width, 'height: ' + body.height);
-    debug.line('velocity x: ' + body.velocity.x.toFixed(2), 'y: ' + body.velocity.y.toFixed(2), 'deltaX: ' + body._dx.toFixed(2), 'deltaY: ' + body._dy.toFixed(2));
-    debug.line('acceleration x: ' + body.acceleration.x.toFixed(2), 'y: ' + body.acceleration.y.toFixed(2), 'speed: ' + body.speed.toFixed(2), 'angle: ' + body.angle.toFixed(2));
-    debug.line('gravity x: ' + body.gravity.x, 'y: ' + body.gravity.y, 'bounce x: ' + body.bounce.x.toFixed(2), 'y: ' + body.bounce.y.toFixed(2));
-    debug.line('touching left: ' + body.touching.left, 'right: ' + body.touching.right, 'up: ' + body.touching.up, 'down: ' + body.touching.down);
-    debug.line('blocked left: ' + body.blocked.left, 'right: ' + body.blocked.right, 'up: ' + body.blocked.up, 'down: ' + body.blocked.down);
+    inline static function degToRad(deg:Float):Float {
+        return deg * 0.017453292519943295;
+    }
 
-};
+    inline static function radToDeg(rad:Float):Float {
+        return rad * 57.29577951308232;
+    }
 
-Phaser.Physics.Arcade.Body.prototype.constructor = Phaser.Physics.Arcade.Body;
+} //Body

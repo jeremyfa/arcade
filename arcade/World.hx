@@ -60,7 +60,13 @@ class World {
     public var quadTree:QuadTree = null;
 
     /** Elapsed time since last tick. */
-    public var elapsed:Float = 0;
+    public var elapsed(default,set):Float = 1.0 / 60.0;
+    inline function set_elapsed(elapsed:Float):Float {
+        this.elapsed = elapsed;
+        this.elapsedMS = Math.round(elapsed * 1000);
+        return elapsed;
+    }
+    public var elapsedMS(default,null):Float = Math.round(1000.0 / 60.0);
 
     /** Internal cache var. */
     private var _total:Int = 0;
@@ -126,8 +132,8 @@ class World {
             body.rotation += (body.angularVelocity * elapsed);
         }
 
-        body.velocityX = computeVelocity(1, body, body.velocityX, body.acceleration.x, body.drag.x, body.maxVelocity.x);
-        body.velocityY = computeVelocity(2, body, body.velocityY, body.acceleration.y, body.drag.y, body.maxVelocity.y);
+        body.velocityX = computeVelocity(1, body, body.velocityX, body.accelerationX, body.dragX, body.maxVelocityX);
+        body.velocityY = computeVelocity(2, body, body.velocityY, body.accelerationY, body.dragY, body.maxVelocityY);
 
     } //updateMotion
 
@@ -156,7 +162,7 @@ class World {
             velocity += (this.gravityY + body.gravityY) * elapsed;
         }
 
-        if (acceleration)
+        if (acceleration != 0)
         {
             velocity += acceleration * elapsed;
         }
@@ -404,11 +410,12 @@ class World {
             var rectRight = bodyRect.right;
             var rectBottom = bodyRect.bottom;
 
-            var circle = bodyCircle.center;
+            var circleX = bodyCircle.centerX;
+            var circleY = bodyCircle.centerY;
 
-            if (circle.y < rectTop || circleY > rectBottom)
+            if (circleY < rectTop || circleY > rectBottom)
             {
-                if (circle.x < rectLeft || circle.x > rectRight)
+                if (circleX < rectLeft || circleX > rectRight)
                 {
                     return this.separateCircle(body1, body2, overlapOnly);
                 }
@@ -1292,7 +1299,7 @@ class World {
      */
     public function closest(source:Body, targets:Array<Body>, world:Bool = false, useCenter:Bool = false):Body
     {
-        var min:Float = 9999999999;
+        var min:Float = 999999999;
         var closest:Body = null;
 
         for (i in 0...targets.length)
