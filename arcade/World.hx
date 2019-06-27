@@ -12,7 +12,7 @@ package arcade;
 * @class Phaser.Physics.Arcade
 * @constructor
 */
-class World #if ceramic extends ceramic.Entity #end {
+class World #if ceramic_arcade_physics extends ceramic.Entity #end {
 
     /** The World gravity X setting. Defaults to 0 (no gravity). */
     public var gravityX:Float = 0;

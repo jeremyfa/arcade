@@ -14,7 +14,8 @@ package arcade;
 * @constructor
 * @param {Phaser.Sprite} sprite - The Sprite object this physics body belongs to.
 */
-class Body #if ceramic extends ceramic.Entity #end
+@:allow(arcade.World)
+class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
 {
 
     public var group:Group = null;
@@ -164,7 +165,7 @@ class Body #if ceramic extends ceramic.Entity #end
     * indicating on which side of the world the Body collided.
     * @property {Phaser.Signal} onWorldBounds
     */
-    #if ceramic
+    #if ceramic_arcade_physics
     @event function worldBounds(body:Body, up:Bool, down:Bool, left:Bool, right:Bool);
     #else
     public var onWorldBounds:Body->Bool->Bool->Bool->Bool->Void = null;
@@ -193,7 +194,7 @@ class Body #if ceramic extends ceramic.Entity #end
     * If two Bodies with this Signal set collide, both will dispatch the Signal.
     * @property {Phaser.Signal} onCollide
     */
-    #if ceramic
+    #if ceramic_arcade_physics
     @event function collide(body1:Body, body2:Body);
     #else
     public var onCollide:Body->Body->Void = null;
@@ -222,7 +223,7 @@ class Body #if ceramic extends ceramic.Entity #end
     * If two Bodies with this Signal set collide, both will dispatch the Signal.
     * @property {Phaser.Signal} onOverlap
     */
-    #if ceramic
+    #if ceramic_arcade_physics
     @event function overlap(body1:Body, body2:Body);
     #else
     public var onOverlap:Body->Body->Void = null;
@@ -467,7 +468,7 @@ class Body #if ceramic extends ceramic.Entity #end
     * @property {Phaser.Signal} onMoveComplete - Listen for the completion of `moveTo` or `moveFrom` events.
     */
     //this, this.velocityX, this.velocityY, percent
-    #if ceramic
+    #if ceramic_arcade_physics
     @event function moveComplete(body:Body, fromCollision:Bool);
     #else
     public var onMoveComplete:Body->Bool->Void = null;
@@ -514,6 +515,10 @@ class Body #if ceramic extends ceramic.Entity #end
     private var _dy:Float = 0;
 
     public function new(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0) {
+
+        #if ceramic_arcade_physics
+        super();
+        #end
 
         this.x = x;
         this.y = y;
@@ -1257,7 +1262,7 @@ class Body #if ceramic extends ceramic.Entity #end
     *
     * @method Phaser.Physics.Arcade.Body#destroy
     */
-    #if ceramic override #end public function destroy():Void
+    #if ceramic_arcade_physics override #end public function destroy():Void
     {
 
         if (group != null) {
