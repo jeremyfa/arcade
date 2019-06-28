@@ -503,6 +503,7 @@ class World #if ceramic_arcade_physics extends ceramic.Entity #end {
         }
         else
         {
+
             //  Rect vs. Rect
             if (body1.right <= body2.left)
             {
@@ -1432,6 +1433,12 @@ class World #if ceramic_arcade_physics extends ceramic.Entity #end {
         }
 
     } //clamp
+
+    #if ceramic_arcade_physics override #end function toString():String {
+
+        return 'World($boundsX,$boundsY,$boundsWidth,$boundsHeight)';
+
+    } //toString
 
     inline static var HALF_PI:Float = 1.5707963267948966;
 

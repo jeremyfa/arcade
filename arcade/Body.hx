@@ -806,9 +806,12 @@ class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
                     }
                 }
 
-                // TODO
-                //this.sprite.x += this._dx;
-                //this.sprite.y += this._dy;
+                #if ceramic_arcade_physics
+                visual.x += this._dx;
+                visual.y += this._dy;
+                #else
+                if (appendVisualXY != null) appendVisualXY(this._dx, this._dy);
+                #end
 
                 this._reset = true;
             }
@@ -817,8 +820,11 @@ class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
 
             if (this.allowRotation)
             {
-                // TODO
-                //this.sprite.angle += this.deltaZ();
+                #if ceramic_arcade_physics
+                visual.rotation += this.deltaZ();
+                #else
+                if (appendVisualAngle != null) appendVisualAngle(this.deltaZ());
+                #end
             }
 
             this.prevX = this.x;
@@ -827,6 +833,13 @@ class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
         }
 
     } //postUpdate
+
+    #if !ceramic_arcade_physics
+
+    public var appendVisualXY:Float->Float->Void = null;
+    public var appendVisualAngle:Float->Void = null;
+
+    #end
 
     /**
     * Internal method.
@@ -1359,7 +1372,7 @@ class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
 
     public var bottom(get,never):Float;
     inline function get_bottom():Float {
-        return y + top;
+        return y + height;
     }
 
     inline static function degToRad(deg:Float):Float {
@@ -1369,5 +1382,11 @@ class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
     inline static function radToDeg(rad:Float):Float {
         return rad * 57.29577951308232;
     }
+
+    #if ceramic_arcade_physics override #end function toString():String {
+
+        return 'Body($left,$top,$right,$bottom)';
+
+    } //toString
 
 } //Body
