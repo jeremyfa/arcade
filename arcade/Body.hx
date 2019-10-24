@@ -15,7 +15,7 @@ package arcade;
 * @param {Phaser.Sprite} sprite - The Sprite object this physics body belongs to.
 */
 @:allow(arcade.World)
-class Body #if ceramic_arcade_physics extends ceramic.PhysicsBody #end
+class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
 {
 
     public var group:Group = null;
