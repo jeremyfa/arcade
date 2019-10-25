@@ -15,7 +15,7 @@ package arcade;
 * @param {Phaser.Sprite} sprite - The Sprite object this physics body belongs to.
 */
 @:allow(arcade.World)
-class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
+class Body
 {
 
     public var group:Group = null;
@@ -165,16 +165,12 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     * indicating on which side of the world the Body collided.
     * @property {Phaser.Signal} onWorldBounds
     */
-    #if ceramic_arcade_physics
-    @event function worldBounds(body:Body, up:Bool, down:Bool, left:Bool, right:Bool);
-    #else
     public var onWorldBounds:Body->Bool->Bool->Bool->Bool->Void = null;
     @:noCompletion inline public function emitWorldBounds(body:Body, up:Bool, down:Bool, left:Bool, right:Bool):Void {
         if (onWorldBounds != null) {
             onWorldBounds(body, up, down, left, right);
         }
     }
-    #end
 
     /**
     * A Signal that is dispatched when this Body collides with another Body.
@@ -194,16 +190,12 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     * If two Bodies with this Signal set collide, both will dispatch the Signal.
     * @property {Phaser.Signal} onCollide
     */
-    #if ceramic_arcade_physics
-    @event function collide(body1:Body, body2:Body);
-    #else
     public var onCollide:Body->Body->Void = null;
     @:noCompletion inline public function emitCollide(body1:Body, body2:Body):Void {
         if (onCollide != null) {
             onCollide(body1, body2);
         }
     }
-    #end
 
     /**
     * A Signal that is dispatched when this Body overlaps with another Body.
@@ -223,16 +215,12 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     * If two Bodies with this Signal set collide, both will dispatch the Signal.
     * @property {Phaser.Signal} onOverlap
     */
-    #if ceramic_arcade_physics
-    @event function overlap(body1:Body, body2:Body);
-    #else
     public var onOverlap:Body->Body->Void = null;
     @:noCompletion inline public function emitOverlap(body1:Body, body2:Body):Void {
         if (onOverlap != null) {
             onOverlap(body1, body2);
         }
     }
-    #end
 
     // @property {Phaser.Point} maxVelocity - The maximum velocity (in pixels per second squared) that the Body can reach.
     public var maxVelocityX:Float = 10000;
@@ -467,17 +455,12 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     /**
     * @property {Phaser.Signal} onMoveComplete - Listen for the completion of `moveTo` or `moveFrom` events.
     */
-    //this, this.velocityX, this.velocityY, percent
-    #if ceramic_arcade_physics
-    @event function moveComplete(body:Body, fromCollision:Bool);
-    #else
     public var onMoveComplete:Body->Bool->Void = null;
     @:noCompletion inline public function emitMoveComplete(body:Body, fromCollision:Bool):Void {
         if (onMoveComplete != null) {
             onMoveComplete(body, fromCollision);
         }
     }
-    #end
 
     /**
     * @property {function} movementCallback - Optional callback. If set, invoked during the running of `moveTo` or `moveFrom` events.
@@ -515,10 +498,6 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     private var _dy:Float = 0;
 
     public function new(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0) {
-
-        #if ceramic_arcade_physics
-        super();
-        #end
 
         this.x = x;
         this.y = y;
@@ -573,7 +552,8 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     * @method Phaser.Physics.Arcade.Body#preUpdate
     * @protected
     */
-    inline function preUpdate(world:World, x:Float, y:Float, width:Float, height:Float, rotation:Float = 0)
+    @:noCompletion
+    inline public function preUpdate(world:World, x:Float, y:Float, width:Float, height:Float, rotation:Float = 0)
     {
 
         if (this.enable)
@@ -744,7 +724,8 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     * @method Phaser.Physics.Arcade.Body#postUpdate
     * @protected
     */
-    inline function postUpdate(world:World)
+    @:noCompletion
+    inline public function postUpdate(world:World)
     {
 
         //  Only allow postUpdate to be called once per frame
@@ -806,12 +787,7 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
                     }
                 }
 
-                #if ceramic_arcade_physics
-                visual.x += this._dx;
-                visual.y += this._dy;
-                #else
-                if (appendVisualXY != null) appendVisualXY(this._dx, this._dy);
-                #end
+                if (appendXY != null) appendXY(this._dx, this._dy);
 
                 this._reset = true;
             }
@@ -820,11 +796,7 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
 
             if (this.allowRotation)
             {
-                #if ceramic_arcade_physics
-                visual.rotation += this.deltaZ();
-                #else
-                if (appendVisualAngle != null) appendVisualAngle(this.deltaZ());
-                #end
+                if (appendAngle != null) appendAngle(this.deltaZ());
             }
 
             this.prevX = this.x;
@@ -834,12 +806,11 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
 
     } //postUpdate
 
-    #if !ceramic_arcade_physics
+    public var dx(get, never):Float;
+    inline function get_dx():Float return this._dx;
 
-    public var appendVisualXY:Float->Float->Void = null;
-    public var appendVisualAngle:Float->Void = null;
-
-    #end
+    public var dy(get, never):Float;
+    inline function get_dy():Float return this._dy;
 
     /**
     * Internal method.
@@ -1275,7 +1246,7 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
     *
     * @method Phaser.Physics.Arcade.Body#destroy
     */
-    #if ceramic_arcade_physics override #end public function destroy():Void
+    public function destroy():Void
     {
 
         if (group != null) {
@@ -1383,7 +1354,7 @@ class Body #if ceramic_arcade_physics extends ceramic.ArcadePhysicsBody #end
         return rad * 57.29577951308232;
     }
 
-    #if ceramic_arcade_physics override #end function toString():String {
+    function toString():String {
 
         return 'Body($left,$top,$right,$bottom)';
 

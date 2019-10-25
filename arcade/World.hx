@@ -12,7 +12,7 @@ package arcade;
 * @class Phaser.Physics.Arcade
 * @constructor
 */
-class World #if ceramic_arcade_physics extends ceramic.Entity #end {
+class World {
 
     /** The World gravity X setting. Defaults to 0 (no gravity). */
     public var gravityX:Float = 0;
@@ -1434,7 +1434,7 @@ class World #if ceramic_arcade_physics extends ceramic.Entity #end {
 
     } //clamp
 
-    #if ceramic_arcade_physics override #end function toString():String {
+    function toString():String {
 
         return 'World($boundsX,$boundsY,$boundsWidth,$boundsHeight)';
 

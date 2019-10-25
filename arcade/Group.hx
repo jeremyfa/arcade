@@ -2,7 +2,7 @@ package arcade;
 
 import arcade.SortBodies;
 
-class Group #if ceramic_arcade_physics extends ceramic.Entity #end {
+class Group {
 
     public var objects:Array<Body> = [];
 
