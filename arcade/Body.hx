@@ -121,14 +121,14 @@ class Body
     public var accelerationY:Float = 0;
 
     /**
-     * @property {boolean} allowDrag - Allow this Body to be influenced by {@link #drag}?
+     * @property {boolean} allowDeceleration - Allow this Body to be influenced by {@link #deceleration}?
      * @default
      */
-    public var allowDrag:Bool = true;
+    public var allowDeceleration:Bool = true;
 
-    // @property {Phaser.Point} drag - The drag applied to the motion of the Body (when {@link #allowDrag} is enabled). Measured in pixels per second squared.
-    public var dragX:Float = 0;
-    public var dragY:Float = 0;
+    // @property {Phaser.Point} deceleration - The deceleration applied to the motion of the Body (when {@link #allowDeceleration} is enabled). Measured in pixels per second squared.
+    public var decelerationX:Float = 0;
+    public var decelerationY:Float = 0;
 
     /**
     * @property {boolean} allowGravity - Allow this Body to be influenced by gravity? Either world or local.
@@ -243,10 +243,10 @@ class Body
     public var angularAcceleration:Float = 0;
 
     /**
-    * @property {number} angularDrag - The drag applied during the rotation of the Body. Measured in degrees per second squared.
+    * @property {number} angularDeceleration - The deceleration applied during the rotation of the Body. Measured in degrees per second squared.
     * @default
     */
-    public var angularDrag:Float = 0;
+    public var angularDeceleration:Float = 0;
 
     /**
     * @property {number} maxAngular - The maximum angular velocity in degrees per second that the Body can reach.
@@ -285,7 +285,7 @@ class Body
     public var immovable:Bool = false;
 
     /**
-    * Whether the physics system should update the Body's position and rotation based on its velocity, acceleration, drag, and gravity.
+    * Whether the physics system should update the Body's position and rotation based on its velocity, acceleration, deceleration, and gravity.
     *
     * If you have a Body that is being moved around the world via a tween or a Group motion, but its local x/y position never
     * actually changes, then you should set Body.moves = false. Otherwise it will most likely fly off the screen.
@@ -883,7 +883,7 @@ class Body
     * Please note that due to browser timings you should allow for a variance in
     * when the duration will actually expire. Depending on system it may be as much as
     * +- 50ms. Also this method doesn't take into consideration any other forces acting
-    * on the Body, such as Gravity, drag or maxVelocity, all of which may impact the
+    * on the Body, such as Gravity, deceleration or maxVelocity, all of which may impact the
     * movement.
     *
     * @method Phaser.Physics.Arcade.Body#moveFrom
@@ -959,7 +959,7 @@ class Body
     * when the distance will actually expire.
     *
     * Note: This method doesn't take into consideration any other forces acting
-    * on the Body, such as Gravity, drag or maxVelocity, all of which may impact the
+    * on the Body, such as Gravity, deceleration or maxVelocity, all of which may impact the
     * movement.
     *
     * @method Phaser.Physics.Arcade.Body#moveTo
