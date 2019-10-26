@@ -787,17 +787,10 @@ class Body
                     }
                 }
 
-                if (appendXY != null) appendXY(this._dx, this._dy);
-
                 this._reset = true;
             }
 
             this.updateCenter();
-
-            if (this.allowRotation)
-            {
-                if (appendAngle != null) appendAngle(this.deltaZ());
-            }
 
             this.prevX = this.x;
             this.prevY = this.y;
