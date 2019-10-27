@@ -113,8 +113,8 @@ class Body
     public var newVelocityY:Float = 0;
 
     // @property {Phaser.Point} deltaMax - The Sprite position is updated based on the delta x/y values. You can set a cap on those (both +-) using deltaMax.
-    public var deltaMaxX:Float = 0;
-    public var deltaMaxY:Float = 0;
+    public var maxDeltaX:Float = 0;
+    public var maxDeltaY:Float = 0;
 
     // @property {Phaser.Point} acceleration - The acceleration is the rate of change of the velocity. Measured in pixels per second squared.
     public var accelerationX:Float = 0;
@@ -745,27 +745,27 @@ class Body
                 this._dx = this.deltaX();
                 this._dy = this.deltaY();
 
-                if (this.deltaMaxX != 0 && this._dx != 0)
+                if (this.maxDeltaX != 0 && this._dx != 0)
                 {
-                    if (this._dx < 0 && this._dx < -this.deltaMaxX)
+                    if (this._dx < 0 && this._dx < -this.maxDeltaX)
                     {
-                        this._dx = -this.deltaMaxX;
+                        this._dx = -this.maxDeltaX;
                     }
-                    else if (this._dx > 0 && this._dx > this.deltaMaxX)
+                    else if (this._dx > 0 && this._dx > this.maxDeltaX)
                     {
-                        this._dx = this.deltaMaxX;
+                        this._dx = this.maxDeltaX;
                     }
                 }
 
-                if (this.deltaMaxY != 0 && this._dy != 0)
+                if (this.maxDeltaY != 0 && this._dy != 0)
                 {
-                    if (this._dy < 0 && this._dy < -this.deltaMaxY)
+                    if (this._dy < 0 && this._dy < -this.maxDeltaY)
                     {
-                        this._dy = -this.deltaMaxY;
+                        this._dy = -this.maxDeltaY;
                     }
-                    else if (this._dy > 0 && this._dy > this.deltaMaxY)
+                    else if (this._dy > 0 && this._dy > this.maxDeltaY)
                     {
-                        this._dy = this.deltaMaxY;
+                        this._dy = this.maxDeltaY;
                     }
                 }
 
