@@ -148,9 +148,9 @@ class Body
     * The elasticity of the Body when colliding with the World bounds.
     * By default this property is `null`, in which case `Body.bounce` is used instead. Set this property
     * to a Phaser.Point object in order to enable a World bounds specific bounce value.
-    * @property {Phaser.Point} worldBounce
+    * @property {Phaser.Point} useWorldBounce
     */
-    public var worldBounce:Bool = false;
+    public var useWorldBounce:Bool = false;
     public var worldBounceX:Float = 0;
     public var worldBounceY:Float = 0;
 
@@ -374,7 +374,7 @@ class Body
     public var wasTouchingRight:Bool = false;
 
     /**
-    * This object is populated with boolean values when the Body collides with the World bounds or a Tile.
+    * This object is populated with boolean values when the Body collides with the World bounds.
     * For example if blocked.up is true then the Body cannot move up.
     * @property {object} blocked - An object containing on which faces this Body is blocked from moving, if any (none, up, down, left, right).
     */
@@ -385,14 +385,6 @@ class Body
     public var blockedRight:Bool = false;
 
     /**
-    * If this is an especially small or fast moving object then it can sometimes skip over tilemap collisions if it moves through a tile in a step.
-    * Set this padding value to add extra padding to its bounds. tilePadding.x applied to its width, y to its height.
-    * @property {Phaser.Point} tilePadding - Extra padding to be added to this sprite's dimensions when checking for tile collision.
-    */
-    public var tilePaddingX:Float = 0;
-    public var tilePaddingY:Float = 0;
-
-    /**
     * @property {boolean} dirty - If this Body in a preUpdate (true) or postUpdate (false) state?
     */
     public var dirty:Bool = false;
@@ -401,16 +393,6 @@ class Body
     * @property {boolean} skipQuadTree - If true and you collide this Sprite against a Group, it will disable the collision check from using a QuadTree.
     */
     public var skipQuadTree:Bool = false;
-
-    /**
-    * If true the Body will check itself against the Sprite.getBounds() dimensions and adjust its width and height accordingly.
-    * If false it will compare its dimensions against the Sprite scale instead, and adjust its width height if the scale has changed.
-    * Typically you would need to enable syncBounds if your sprite is the child of a responsive display object such as a FlexLayer,
-    * or in any situation where the Sprite scale doesn't change, but its parents scale is effecting the dimensions regardless.
-    * @property {boolean} syncBounds
-    * @default
-    */
-    public var syncBounds:Bool = false;
 
     /**
     * @property {boolean} isMoving - Set by the `moveTo` and `moveFrom` methods.
@@ -825,8 +807,8 @@ class Body
         var checkRight = world.checkCollisionRight;
         var checkLeft = world.checkCollisionLeft;
 
-        var bx = (this.worldBounce) ? -this.worldBounceX : -this.bounceX;
-        var by = (this.worldBounce) ? -this.worldBounceY : -this.bounceY;
+        var bx = (this.useWorldBounce) ? -this.worldBounceX : -this.bounceX;
+        var by = (this.useWorldBounce) ? -this.worldBounceY : -this.bounceY;
 
         if (this.x < boundsX && checkLeft)
         {
