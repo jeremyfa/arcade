@@ -17,6 +17,8 @@ package arcade;
 @:allow(arcade.World)
 class Body
 {
+    /** A property to hold any data related to this body. Can be useful if building a system on top if this one. */
+    public var data:Dynamic = null;
 
     public var group:Group = null;
 
@@ -1228,6 +1230,8 @@ class Body
             group.remove(this);
             group = null;
         }
+
+        data = null;
 
     } //destroy
 
