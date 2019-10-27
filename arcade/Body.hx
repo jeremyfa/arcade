@@ -249,10 +249,10 @@ class Body
     public var angularDeceleration:Float = 0;
 
     /**
-    * @property {number} maxAngular - The maximum angular velocity in degrees per second that the Body can reach.
+    * @property {number} maxAngularVelocity - The maximum angular velocity in degrees per second that the Body can reach.
     * @default
     */
-    public var maxAngular:Float = 1000;
+    public var maxAngularVelocity:Float = 1000;
 
     /**
     * @property {number} mass - The mass of the Body. When two bodies collide their mass is used in the calculation to determine the exchange of velocity.

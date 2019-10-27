@@ -127,7 +127,7 @@ class World {
 
         if (body.allowRotation)
         {
-            var velocityDelta = computeVelocity(0, body, body.angularVelocity, body.angularAcceleration, body.angularDeceleration, body.maxAngular) - body.angularVelocity;
+            var velocityDelta = computeVelocity(0, body, body.angularVelocity, body.angularAcceleration, body.angularDeceleration, body.maxAngularVelocity) - body.angularVelocity;
             body.angularVelocity += velocityDelta;
             body.rotation += (body.angularVelocity * elapsed);
         }
