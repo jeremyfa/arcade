@@ -127,13 +127,13 @@ class World {
 
         if (body.allowRotation)
         {
-            var velocityDelta = computeVelocity(0, body, body.angularVelocity, body.angularAcceleration, body.angularDeceleration, body.maxAngularVelocity) - body.angularVelocity;
+            var velocityDelta = computeVelocity(0, body, body.angularVelocity, body.angularAcceleration, body.angularDrag, body.maxAngularVelocity) - body.angularVelocity;
             body.angularVelocity += velocityDelta;
             body.rotation += (body.angularVelocity * elapsed);
         }
 
-        body.velocityX = computeVelocity(1, body, body.velocityX, body.accelerationX, body.decelerationX, body.maxVelocityX);
-        body.velocityY = computeVelocity(2, body, body.velocityY, body.accelerationY, body.decelerationY, body.maxVelocityY);
+        body.velocityX = computeVelocity(1, body, body.velocityX, body.accelerationX, body.dragX, body.maxVelocityX);
+        body.velocityY = computeVelocity(2, body, body.velocityY, body.accelerationY, body.dragY, body.maxVelocityY);
 
     } //updateMotion
 
@@ -146,11 +146,11 @@ class World {
      * @param {Phaser.Physics.Arcade.Body} body - The Body object to be updated.
      * @param {number} velocity - Any component of velocity (e.g. 20).
      * @param {number} acceleration - Rate at which the velocity is changing.
-     * @param {number} deceleration - Really kind of a deceleration, this is how much the velocity changes if Acceleration is not set.
+     * @param {number} drag - Really kind of a deceleration, this is how much the velocity changes if Acceleration is not set.
      * @param {number} [max=10000] - An absolute value cap for the velocity.
      * @return {number} The altered Velocity value.
      */
-    inline public function computeVelocity(axis:Axis, body:Body, velocity:Float, acceleration:Float, deceleration:Float, max:Float = 10000):Float
+    inline public function computeVelocity(axis:Axis, body:Body, velocity:Float, acceleration:Float, drag:Float, max:Float = 10000):Float
     {
 
         if (axis == Axis.HORIZONTAL && body.allowGravity)
@@ -166,17 +166,17 @@ class World {
         {
             velocity += acceleration * elapsed;
         }
-        else if (deceleration != 0 && body.allowDeceleration)
+        else if (drag != 0 && body.allowDrag)
         {
-            deceleration *= elapsed;
+            drag *= elapsed;
 
-            if (velocity - deceleration > 0)
+            if (velocity - drag > 0)
             {
-                velocity -= deceleration;
+                velocity -= drag;
             }
-            else if (velocity + deceleration < 0)
+            else if (velocity + drag < 0)
             {
-                velocity += deceleration;
+                velocity += drag;
             }
             else
             {
@@ -1038,7 +1038,7 @@ class World {
      * Timings are approximate due to the way browser timers work. Allow for a variance of +- 50ms.
      * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
      * Note: The display object doesn't stop moving once it reaches the destination coordinates.
-     * Note: Doesn't take into account acceleration, maxVelocity or deceleration (if you've set deceleration or acceleration too high this object may not move at all)
+     * Note: Doesn't take into account acceleration, maxVelocity or drag (if you've set drag or acceleration too high this object may not move at all)
      *
      * @method Phaser.Physics.Arcade#moveToObject
      * @param {any} displayObject - The display object to move.
@@ -1071,7 +1071,7 @@ class World {
      * Timings are approximate due to the way browser timers work. Allow for a variance of +- 50ms.
      * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
      * Note: The display object doesn't stop moving once it reaches the destination coordinates.
-     * Note: Doesn't take into account acceleration, maxVelocity or deceleration (if you've set deceleration or acceleration too high this object may not move at all)
+     * Note: Doesn't take into account acceleration, maxVelocity or drag (if you've set drag or acceleration too high this object may not move at all)
      *
      * @method Phaser.Physics.Arcade#moveToXY
      * @param {any} displayObject - The display object to move.
