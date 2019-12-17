@@ -166,7 +166,7 @@ class World {
         {
             velocity += acceleration * elapsed;
         }
-        else if (drag != 0 && body.allowDrag)
+        if (drag != 0 && body.allowDrag)
         {
             drag *= elapsed;
 
