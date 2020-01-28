@@ -36,7 +36,7 @@ class SortBodiesLeftRight {
 
         return a.x - b.x >= 0 ? 1 : -1;
 
-    } //cmp
+    }
 
     /**
         Sorts Array `a` according to the comparison function `cmp`, where
@@ -166,7 +166,7 @@ class SortBodiesLeftRight {
         return cmp(a[i], a[j]);
     }
 
-} //SortBodiesLeftRight
+}
 
 /**
     SortBodiesLeftRight provides a stable implementation of merge sort through its `sort`
@@ -182,7 +182,7 @@ class SortBodiesRightLeft {
 
         return b.x - a.x >= 0 ? 1 : -1;
 
-    } //cmp
+    }
 
     /**
         Sorts Array `a` according to the comparison function `cmp`, where
@@ -312,7 +312,7 @@ class SortBodiesRightLeft {
         return cmp(a[i], a[j]);
     }
 
-} //SortBodiesRightLeft
+}
 
 /**
     SortBodiesTopBottom provides a stable implementation of merge sort through its `sort`
@@ -328,7 +328,7 @@ class SortBodiesTopBottom {
 
         return a.y - b.y >= 0 ? 1 : -1;
 
-    } //cmp
+    }
 
     /**
         Sorts Array `a` according to the comparison function `cmp`, where
@@ -458,7 +458,7 @@ class SortBodiesTopBottom {
         return cmp(a[i], a[j]);
     }
 
-} //SortBodiesTopBottom
+}
 
 /**
     SortBodiesBottomTop provides a stable implementation of merge sort through its `sort`
@@ -474,7 +474,7 @@ class SortBodiesBottomTop {
 
         return b.y - a.y > 0 ? 1 : -1;
 
-    } //cmp
+    }
 
     /**
         Sorts Array `a` according to the comparison function `cmp`, where
@@ -604,4 +604,4 @@ class SortBodiesBottomTop {
         return cmp(a[i], a[j]);
     }
 
-} //SortBodiesBottomTop
+}

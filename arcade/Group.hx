@@ -10,7 +10,7 @@ class Group {
 
     public function new() {
 
-    } //new
+    }
 
     public function remove(body:Body):Void {
 
@@ -22,30 +22,30 @@ class Group {
             trace('[warning] Cannot remove body $body from group, index is -1');
         }
 
-    } //remove
+    }
 
     public function sortLeftRight() {
 
         SortBodiesLeftRight.sort(objects);
 
-    } //sortLeftRight
+    }
 
     public function sortRightLeft() {
 
         SortBodiesRightLeft.sort(objects);
 
-    } //sortRightLeft
+    }
 
     public function sortTopBottom() {
 
         SortBodiesTopBottom.sort(objects);
 
-    } //sortTopBottom
+    }
 
     public function sortBottomTop() {
 
         SortBodiesBottomTop.sort(objects);
 
-    } //sortBottomTop
+    }
 
-} //Group
+}

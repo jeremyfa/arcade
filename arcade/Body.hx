@@ -495,7 +495,7 @@ class Body
         updateHalfSize();
         updateCenter();
 
-    } //new
+    }
 
     inline public function updateHalfSize()
     {
@@ -503,7 +503,7 @@ class Body
         this.halfWidth = Math.floor(this.width * 0.5);
         this.halfHeight = Math.floor(this.height * 0.5);
 
-    } //updateHalfSize
+    }
 
     /**
     * Update the Body's center from its position.
@@ -517,7 +517,7 @@ class Body
         this.centerX = this.x + this.halfWidth;
         this.centerY = this.y + this.halfHeight;
 
-    } //updateCenter
+    }
 
     inline public function updateSize(width:Float, height:Float) {
 
@@ -528,7 +528,7 @@ class Body
             this._reset = true;
         }
 
-    } //updateSize
+    }
 
     /**
     * Internal method.
@@ -624,7 +624,7 @@ class Body
 
         }
 
-    } //preUpdate
+    }
 
     /**
     * Internal method.
@@ -670,7 +670,7 @@ class Body
 
         return stop;
 
-    } //updateMovement
+    }
 
     /**
     * If this Body is moving as a result of a call to `moveTo` or `moveFrom` (i.e. it
@@ -700,7 +700,7 @@ class Body
             emitMoveComplete(this, (this.overlapX != 0 || this.overlapY != 0));
         }
 
-    } //stopMovement
+    }
 
     /**
     * Internal method.
@@ -781,7 +781,7 @@ class Body
 
         }
 
-    } //postUpdate
+    }
 
     public var dx(get, never):Float;
     inline function get_dx():Float return this._dx;
@@ -844,7 +844,7 @@ class Body
 
         return !this.blockedNone;
 
-    } //checkWorldBounds
+    }
 
     /**
     * Note: This method is experimental, and may be changed or removed in a future release.
@@ -921,7 +921,7 @@ class Body
 
         return true;
 
-    } //moveFrom
+    }
 
     /**
     * Note: This method is experimental, and may be changed or removed in a future release.
@@ -1015,7 +1015,7 @@ class Body
 
         return true;
 
-    } //moveTo
+    }
 
     /**
     * Sets this Body as using a circle, of the given radius, for all collision detection instead of a rectangle.
@@ -1050,7 +1050,7 @@ class Body
             this.isCircle = false;
         }
 
-    } //setCircle
+    }
 
     /**
     * Resets all Body values (velocity, acceleration, rotation, etc)
@@ -1076,7 +1076,7 @@ class Body
         this.updateSize(width, height);
         this.updateCenter();
 
-    } //reset
+    }
 
     /**
      * Sets acceleration, velocity, and {@link #speed} to 0.
@@ -1094,7 +1094,7 @@ class Body
         this.angularVelocity = 0;
         this.angularAcceleration = 0;
 
-    } //stop
+    }
 
     /**
     * Tests if a world point lies within this Body.
@@ -1109,7 +1109,7 @@ class Body
 
         return (this.isCircle) ? circleContains(this, x, y) : rectangleContains(this, x, y);
 
-    } //hitTest
+    }
 
     /**
     * Returns true if the bottom of this Body is in contact with either the world bounds or a tile.
@@ -1122,7 +1122,7 @@ class Body
 
         return this.blockedDown;
 
-    } //isOnFloor
+    }
 
     /**
     * Returns true if the top of this Body is in contact with either the world bounds or a tile.
@@ -1135,7 +1135,7 @@ class Body
 
         return this.blockedUp;
 
-    } //isOnCeiling
+    }
 
     /**
     * Returns true if either side of this Body is in contact with either the world bounds or a tile.
@@ -1148,7 +1148,7 @@ class Body
 
         return (this.blockedLeft || this.blockedRight);
 
-    } //isOnWall
+    }
 
     /**
     * Returns the absolute delta x value.
@@ -1161,7 +1161,7 @@ class Body
 
         return (this.deltaX() > 0 ? this.deltaX() : -this.deltaX());
 
-    } //deltaAbsX
+    }
 
     /**
     * Returns the absolute delta y value.
@@ -1174,7 +1174,7 @@ class Body
 
         return (this.deltaY() > 0 ? this.deltaY() : -this.deltaY());
 
-    } //deltaAbsY
+    }
 
     /**
     * Returns the delta x value. The difference between Body.x now and in the previous step.
@@ -1187,7 +1187,7 @@ class Body
 
         return this.x - this.prevX;
 
-    } //deltaX
+    }
 
     /**
     * Returns the delta y value. The difference between Body.y now and in the previous step.
@@ -1200,7 +1200,7 @@ class Body
 
         return this.y - this.prevY;
 
-    } //deltaY
+    }
 
     /**
     * Returns the delta z value. The difference between Body.rotation now and in the previous step.
@@ -1213,7 +1213,7 @@ class Body
 
         return this.rotation - this.preRotation;
 
-    } //deltaZ
+    }
 
     /**
     * Destroys this Body.
@@ -1233,7 +1233,7 @@ class Body
 
         data = null;
 
-    } //destroy
+    }
 
 /// Helpers
 
@@ -1245,7 +1245,7 @@ class Body
         velocityX = Math.cos(azimuth) * radius;
         velocityY = Math.sin(azimuth) * radius;
 
-    } //setVelocityToPolar
+    }
 
     inline public function setAccelerationToPolar(azimuth:Float, radius:Float = 1, asDegrees:Bool = false):Void
     {
@@ -1255,7 +1255,7 @@ class Body
         accelerationX = Math.cos(azimuth) * radius;
         accelerationY = Math.sin(azimuth) * radius;
 
-    } //setAccelerationToPolar
+    }
 
     /**
      * Return true if the given x/y coordinates are within the Circle object.
@@ -1281,7 +1281,7 @@ class Body
             return false;
         }
 
-    } //circleContains
+    }
 
     /**
      * Determines whether the specified coordinates are contained within the region defined by this Rectangle object.
@@ -1301,7 +1301,7 @@ class Body
 
         return (x >= body.x && x < body.right && y >= body.y && y < body.bottom);
 
-    } //rectangleContains
+    }
 
 /// Additional getters
 
@@ -1337,6 +1337,6 @@ class Body
 
         return 'Body($left,$top,$right,$bottom)';
 
-    } //toString
+    }
 
-} //Body
+}

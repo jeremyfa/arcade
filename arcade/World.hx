@@ -80,7 +80,7 @@ class World {
 
         this.quadTree = new QuadTree(this.boundsX, this.boundsY, this.boundsWidth, this.boundsHeight, this.maxObjects, this.maxLevels);
 
-    } //new
+    }
 
     /**
      * Updates the size of this physics world.
@@ -98,7 +98,7 @@ class World {
         this.boundsWidth = width;
         this.boundsHeight = height;
 
-    } //setBounds
+    }
 
     /**
      * Creates an Arcade Physics body on the given game object.
@@ -114,7 +114,7 @@ class World {
 
         // TODO?
 
-    } //enableBody
+    }
 
     /**
      * Called automatically by a Physics body, it updates all motion related values on the Body unless `World.isPaused` is `true`.
@@ -135,7 +135,7 @@ class World {
         body.velocityX = computeVelocity(1, body, body.velocityX, body.accelerationX, body.dragX, body.maxVelocityX);
         body.velocityY = computeVelocity(2, body, body.velocityY, body.accelerationY, body.dragY, body.maxVelocityY);
 
-    } //updateMotion
+    }
 
     /**
      * A tween-like function that takes a starting velocity and some other factors and returns an altered velocity.
@@ -195,7 +195,7 @@ class World {
 
         return velocity;
 
-    } //computeVelocity
+    }
 
     /**
      * Checks for overlaps between two game objects. The objects can be Sprites, Groups or Emitters.
@@ -241,7 +241,7 @@ class World {
 
         return (_total > 0);
 
-    } //overlap
+    }
 
     /**
      * Checks for collision between two game objects and separates them if colliding ({@link https://gist.github.com/samme/cbb81dd19f564dcfe2232761e575063d details}). If you don't require separation then use {@link #overlap} instead.
@@ -309,7 +309,7 @@ class World {
 
         return (_total > 0);
 
-    } //collide
+    }
 
     /**
      * This method will sort a Groups hash array.
@@ -357,7 +357,7 @@ class World {
             group.sortBottomTop();
         }
 
-    } //sort
+    }
 
     /**
      * The core separation function to separate two physics bodies.
@@ -465,7 +465,7 @@ class World {
 
         return result;
 
-    } //separate
+    }
 
     /**
      * Check for intersection against two bodies.
@@ -528,7 +528,7 @@ class World {
             return true;
         }
 
-    } //intersects
+    }
 
     /**
      * Checks to see if a circular Body intersects with a Rectangular Body.
@@ -549,7 +549,7 @@ class World {
 
         return (dx + dy) <= (circle.halfWidth * circle.halfWidth);
 
-    } //circleBodyIntersects
+    }
 
     /**
      * The core separation function to separate two circular physics bodies.
@@ -714,7 +714,7 @@ class World {
 
         return true;
 
-    } //separateCircle
+    }
 
     /**
      * Calculates the horizontal overlap between two Bodies and sets their properties accordingly, including:
@@ -779,7 +779,7 @@ class World {
 
         return overlap;
 
-    } //getOverlapX
+    }
 
     /**
      * Calculates the vertical overlap between two Bodies and sets their properties accordingly, including:
@@ -844,7 +844,7 @@ class World {
 
         return overlap;
 
-    } //getOverlapY
+    }
 
     /**
      * The core separation function to separate two physics bodies on the x axis.
@@ -915,7 +915,7 @@ class World {
         //  If we got this far then there WAS overlap, and separation is complete, so return true
         return true;
 
-    } //separateX
+    }
 
     /**
      * The core separation function to separate two physics bodies on the y axis.
@@ -986,7 +986,7 @@ class World {
         //  If we got this far then there WAS overlap, and separation is complete, so return true
         return true;
 
-    } //separateY
+    }
 
     /**
      * Given a Group and a location this will check to see which Group children overlap with the coordinates.
@@ -1030,7 +1030,7 @@ class World {
 
         return output;
 
-    } //getObjectsAtLocation
+    }
 
     /**
      * Move the given display object towards the destination object at a steady velocity.
@@ -1063,7 +1063,7 @@ class World {
 
         return angle;
 
-    } //moveToDestination
+    }
 
     /**
      * Move the given display object towards the x/y coordinates at a steady velocity.
@@ -1096,7 +1096,7 @@ class World {
 
         return angle;
 
-    } //moveToXY
+    }
 
     /**
      * Given the angle (in degrees) and speed calculate the velocity and return it as a Point object, or set it to the given point object.
@@ -1117,7 +1117,7 @@ class World {
 
         return point;
 
-    } //velocityFromAngle
+    }
 
     /**
      * Given the rotation (in radians) and speed calculate the velocity and return it as a Point object, or set it to the given point object.
@@ -1138,7 +1138,7 @@ class World {
 
         return point;
 
-    } //velocityFromRotation
+    }
 
     /**
      * Given the rotation (in radians) and speed calculate the acceleration and return it as a Point object, or set it to the given point object.
@@ -1159,7 +1159,7 @@ class World {
 
         return point;
 
-    } //accelerationFromRotation
+    }
 
     /**
      * Sets the acceleration.x/y property on the display object so it will move towards the target at the given speed (in pixels per second sq.)
@@ -1186,7 +1186,7 @@ class World {
 
         return angle;
 
-    } //accelerateToDestination
+    }
 
     /**
      * Sets the acceleration.x/y property on the display object so it will move towards the x/y coordinates at the given speed (in pixels per second sq.)
@@ -1214,7 +1214,7 @@ class World {
 
         return angle;
 
-    } //accelerateToXY
+    }
 
     /**
      * Find the distance between two display objects (like Sprites).
@@ -1255,7 +1255,7 @@ class World {
 
         return Math.sqrt(dx * dx + dy * dy);
 
-    } //distanceBetween
+    }
 
     /**
      * Find the distance between a display object (like a Sprite) and the given x/y coordinates.
@@ -1281,7 +1281,7 @@ class World {
 
         return Math.sqrt(dx * dx + dy * dy);
 
-    } //distanceToXY
+    }
 
 
     /**
@@ -1313,7 +1313,7 @@ class World {
 
         return closest;
 
-    } //closest
+    }
 
     /**
      * From a set of points or display objects, find the one farthest from a source point or object.
@@ -1344,7 +1344,7 @@ class World {
 
         return farthest;
 
-    } //farthest
+    }
 
     /**
      * Find the angle in radians between two display objects (like Sprites).
@@ -1364,7 +1364,7 @@ class World {
 
         return Math.atan2(target.y - source.y, target.x - source.x);
 
-    } //angleBetween
+    }
 
     /**
      * Find the angle in radians between centers of two display objects (like Sprites).
@@ -1382,7 +1382,7 @@ class World {
 
         return Math.atan2(dy, dx);
 
-    } //angleBetweenCenters
+    }
 
     /**
      * Find the angle in radians between a display object (like a Sprite) and the given x/y coordinate.
@@ -1403,7 +1403,7 @@ class World {
 
         return Math.atan2(y - body.y, x - body.x);
 
-    } //angleToXY
+    }
 
 /// Internal
 
@@ -1414,7 +1414,7 @@ class World {
 
         return Math.sqrt(dx * dx + dy * dy);
 
-    } //distance
+    }
 
     inline static function clamp(v:Float, min:Float, max:Float):Float
     {
@@ -1432,14 +1432,14 @@ class World {
             return v;
         }
 
-    } //clamp
+    }
 
     function toString():String {
 
         return 'World($boundsX,$boundsY,$boundsWidth,$boundsHeight)';
 
-    } //toString
+    }
 
     inline static var HALF_PI:Float = 1.5707963267948966;
 
-} //World
+}

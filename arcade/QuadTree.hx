@@ -75,14 +75,14 @@ class QuadTree
         _pool = pool != null ? pool : new QuadTreePool();
         reset(x, y, width, height, maxObjects, maxLevels, level);
 
-    } //new
+    }
 
     public function recycle():Void {
 
         clear();
         _pool.recycle(this);
 
-    } //recycle
+    }
 
     /**
     * Resets the QuadTree.
@@ -120,7 +120,7 @@ class QuadTree
         nodes.splice(0, nodes.length);
         #end
 
-    } //reset
+    }
 
     /**
     * Populates this quadtree with the children of the given Group. In order to be added the child must exist and have a body property.
@@ -135,7 +135,7 @@ class QuadTree
             insert(group.objects[i]);
         }
 
-    } //populate
+    }
 
     /**
     * Split the node into 4 subnodes
@@ -157,7 +157,7 @@ class QuadTree
         //  bottom right node
         this.nodes[3] = _pool.create(this.boundsRight, this.boundsBottom, this.boundsSubWidth, this.boundsSubHeight, this.maxObjects, this.maxLevels, (this.level + 1));
 
-    } //split
+    }
 
     /**
     * Insert the object into the node. If the node exceeds the capacity, it will split and add all objects to their corresponding subnodes.
@@ -211,7 +211,7 @@ class QuadTree
             }
         }
 
-    } //insert
+    }
 
     /**
     * Determine which node the object belongs to.
@@ -256,7 +256,7 @@ class QuadTree
 
         return index;
 
-    } //getIndex
+    }
 
     /**
     * Return all objects that could collide with the given Sprite or Rectangle.
@@ -291,7 +291,7 @@ class QuadTree
 
         return returnObjects;
 
-    } //retrieve
+    }
 
     /**
     * Clear the quadtree.
@@ -311,15 +311,15 @@ class QuadTree
         nodes.splice(0, nodes.length);
         #end
 
-    } //clear
+    }
 
-} //QuadTree
+}
 
 class QuadTreePool {
 
     public function new() {
 
-    } //new
+    }
 
 /// Recycling QuadTree objects
 
@@ -331,7 +331,7 @@ class QuadTreePool {
         _pool = [];
         _nextPoolIndex = 0;
 
-    } //clearPool
+    }
 
     public function create(x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0):QuadTree {
 
@@ -351,13 +351,13 @@ class QuadTreePool {
             return quadTree;
         }
 
-    } //create
+    }
 
     public function recycleAll():Void {
 
         _nextPoolIndex = 0;
 
-    } //recycleAll
+    }
 
     public function recycle(quadTree:QuadTree):Void {
 
@@ -378,9 +378,9 @@ class QuadTreePool {
         }
         // else already recycled?
 
-    } //recycle
+    }
 
-} //QuadTreePool
+}
 
 /**
 * Javascript QuadTree

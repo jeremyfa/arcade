@@ -16,6 +16,6 @@ class Test {
         
         trace('hello');
 
-    } //main
+    }
 
 } //Test
