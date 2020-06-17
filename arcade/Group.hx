@@ -12,6 +12,28 @@ class Group {
 
     }
 
+    public function add(body:Body):Void {
+
+        var index = objects.indexOf(body);
+        if (index != -1) {
+            trace('[warning] Cannot add body $body to group, already inside group');
+        }
+        else {
+            objects.push(body);
+        }
+
+        if (body.groups != null) {
+            var groupIndex = body.groups.indexOf(this);
+            if (groupIndex == -1) {
+                body.groups.push(this);
+            }
+        }
+        else {
+            body.groups = [this];
+        }
+
+    }
+
     public function remove(body:Body):Void {
 
         var index = objects.indexOf(body);
@@ -20,6 +42,13 @@ class Group {
         }
         else {
             trace('[warning] Cannot remove body $body from group, index is -1');
+        }
+
+        if (body.groups != null) {
+            var groupIndex = body.groups.indexOf(this);
+            if (groupIndex != -1) {
+                body.groups.splice(groupIndex, 1);
+            }
         }
 
     }

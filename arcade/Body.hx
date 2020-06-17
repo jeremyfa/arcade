@@ -20,7 +20,23 @@ class Body
     /** A property to hold any data related to this body. Can be useful if building a system on top if this one. */
     public var data:Dynamic = null;
 
-    public var group:Group = null;
+    /** The list of groups that contain this body (can be null if there are no groups). */
+    @:allow(arcade.Group)
+    public var groups(default, null):Array<Group> = null;
+
+    /** A "main" group associated with this body. */
+    public var group(default, set):Group = null;
+    function set_group(group:Group):Group {
+        if (this.group == group) return group;
+        if (this.group != null) {
+            this.group.remove(this);
+        }
+        this.group = group;
+        if (this.group != null) {
+            this.group.add(this);
+        }
+        return group;
+    }
 
     /**
     * @property {boolean} enable - A disabled body won't be checked for any form of collision or overlap or have its pre/post updates run.
@@ -1226,9 +1242,11 @@ class Body
     public function destroy():Void
     {
 
-        if (group != null) {
-            group.remove(this);
-            group = null;
+        if (groups != null) {
+            for (group in [].concat(groups)) {
+                group.remove(this);
+            }
+            groups = null;
         }
 
         data = null;

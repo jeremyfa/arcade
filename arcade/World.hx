@@ -198,30 +198,8 @@ class World {
     }
 
     /**
-     * Checks for overlaps between two game objects. The objects can be Sprites, Groups or Emitters.
-     *
+     * Checks for overlaps between two bodies. The objects can be Sprites, Groups or Emitters.
      * Unlike {@link #collide} the objects are NOT automatically separated or have any physics applied, they merely test for overlap results.
-     *
-     * You can perform Sprite vs. Sprite, Sprite vs. Group and Group vs. Group overlap checks.
-     * Both the first and second parameter can be arrays of objects, of differing types.
-     * If two arrays are passed, the contents of the first parameter will be tested against all contents of the 2nd parameter.
-     *
-     * **This function is not recursive**, and will not test against children of objects passed (i.e. Groups within Groups).
-     *
-     * ##### Tilemaps
-     *
-     * Any overlapping tiles, including blank/null tiles, will give a positive result. Tiles marked via {@link Phaser.Tilemap#setCollision} (and similar methods) have no special status, and callbacks added via {@link Phaser.Tilemap#setTileIndexCallback} or {@link Phaser.Tilemap#setTileLocationCallback} are not invoked. So calling this method without any callbacks isn't very useful.
-     *
-     * If you're interested only in whether an object overlaps a certain tile or class of tiles, filter the tiles with `processCallback` and then use the result returned by this method. Blank/null tiles can be excluded by their {@link Phaser.Tile#index index} (-1).
-     *
-     * If you want to take action on certain overlaps, examine the tiles in `collideCallback` and then handle as you like.
-     *
-     * @method Phaser.Physics.Arcade#overlap
-     * @param {Phaser.Sprite|Phaser.Group|Phaser.Particles.Emitter|array} object1 - The first object or array of objects to check. Can be Phaser.Sprite, Phaser.Group or Phaser.Particles.Emitter.
-     * @param {Phaser.Sprite|Phaser.Group|Phaser.Particles.Emitter|array} object2 - The second object or array of objects to check. Can be Phaser.Sprite, Phaser.Group or Phaser.Particles.Emitter.
-     * @param {function} [overlapCallback=null] - An optional callback function that is called if the objects overlap. The two objects will be passed to this function in the same order in which you specified them, unless you are checking Group vs. Sprite, in which case Sprite will always be the first parameter.
-     * @param {function} [processCallback=null] - A callback function that lets you perform additional checks against the two objects if they overlap. If this is set then `overlapCallback` will only be called if this callback returns `true`.
-     * @param {object} [callbackContext] - The context in which to run the callbacks.
      * @return {boolean} True if an overlap occurred otherwise false.
      */
     public function overlap(body1:Body, body2:Body, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
@@ -243,53 +221,101 @@ class World {
 
     }
 
+    public function overlapGroupVsGroup(group1:Group, group2:Group, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (group1.sortDirection != NONE && (group1.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group1);
+        }
+        if (group2.sortDirection != NONE && (group2.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group2);
+        }
+
+        _total = 0;
+
+        var objects1 = group1.objects;
+        var objects2 = group2.objects;
+        for (i in 0...objects1.length) {
+            var body1 = objects1[i];
+            for (j in 0...objects2.length) {
+                var body2 = objects2[j];
+
+                if (separate(body1, body2, processCallback, false))
+                {
+                    if (overlapCallback != null)
+                    {
+                        overlapCallback(body1, body2);
+                    }
+        
+                    _total++;
+                }
+            }
+        }
+
+        return (_total > 0);
+
+    }
+
+    public function overlapGroupVsItself(group:Group, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (group.sortDirection != NONE && (group.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group);
+        }
+
+        _total = 0;
+
+        var objects = group.objects;
+        for (i in 0...objects.length) {
+            var body1 = objects[i];
+            for (j in 0...objects.length) {
+                var body2 = objects[j];
+
+                if (body1 != body2) {
+                    if (separate(body1, body2, processCallback, false))
+                    {
+                        if (overlapCallback != null)
+                        {
+                            overlapCallback(body1, body2);
+                        }
+            
+                        _total++;
+                    }
+                }
+            }
+        }
+
+        return (_total > 0);
+
+    }
+
+    public function overlapBodyVsGroup(body:Body, group:Group, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (group.sortDirection != NONE && (group.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group);
+        }
+
+        _total = 0;
+
+        var objects = group.objects;
+        for (i in 0...objects.length) {
+            var body2 = objects[i];
+
+            if (separate(body, body2, processCallback, false))
+            {
+                if (overlapCallback != null)
+                {
+                    overlapCallback(body, body2);
+                }
+    
+                _total++;
+            }
+        }
+
+        return (_total > 0);
+
+    }
+
     /**
-     * Checks for collision between two game objects and separates them if colliding ({@link https://gist.github.com/samme/cbb81dd19f564dcfe2232761e575063d details}). If you don't require separation then use {@link #overlap} instead.
-     *
-     * You can perform Sprite vs. Sprite, Sprite vs. Group, Group vs. Group, Sprite vs. Tilemap Layer or Group vs. Tilemap Layer collisions.
-     * Both the `object1` and `object2` can be arrays of objects, of differing types.
-     *
-     * If two Groups or arrays are passed, each member of one will be tested against each member of the other.
-     *
-     * If one Group **only** is passed (as `object1`), each member of the Group will be collided against the other members.
-     *
-     * If either object is `null` the collision test will fail.
-     *
-     * Bodies with `enable = false` and Sprites with `exists = false` are skipped (ignored).
-     *
-     * An optional processCallback can be provided. If given this function will be called when two sprites are found to be colliding. It is called before any separation takes place, giving you the chance to perform additional checks. If the function returns true then the collision and separation is carried out. If it returns false it is skipped.
-     *
-     * The collideCallback is an optional function that is only called if two sprites collide. If a processCallback has been set then it needs to return true for collideCallback to be called.
-     *
-     * **This function is not recursive**, and will not test against children of objects passed (i.e. Groups or Tilemaps within other Groups).
-     *
-     * ##### Examples
-     *
-     * ```javascript
-     * collide(group);
-     * collide(group, undefined); // equivalent
-     *
-     * collide(sprite1, sprite2);
-     *
-     * collide(sprite, group);
-     *
-     * collide(group1, group2);
-     *
-     * collide([sprite1, sprite2], [sprite3, sprite4]); // 1 vs. 3, 1 vs. 4, 2 vs. 3, 2 vs. 4
-     * ```
-     *
-     * ##### Tilemaps
-     *
-     * Tiles marked via {@link Phaser.Tilemap#setCollision} (and similar methods) are "solid". If a Sprite collides with one of these tiles, the two are separated by moving the Sprite outside the tile's edges. Enable {@link Phaser.TilemapLayer#debug} to see the colliding edges of the Tilemap.
-     *
-     * Tiles with a callback attached via {@link Phaser.Tilemap#setTileIndexCallback} or {@link Phaser.Tilemap#setTileLocationCallback} invoke the callback if a Sprite collides with them. If a tile has a callback attached via both methods, only the location callback is invoked. The colliding Sprite is separated from the tile only if the callback returns `true`.
-     *
-     * @method Phaser.Physics.Arcade#collide
-     * @param {Phaser.Sprite|Phaser.Group|Phaser.Particles.Emitter|Phaser.TilemapLayer|array} object1 - The first object or array of objects to check. Can be Phaser.Sprite, Phaser.Group, Phaser.Particles.Emitter, or Phaser.TilemapLayer.
-     * @param {Phaser.Sprite|Phaser.Group|Phaser.Particles.Emitter|Phaser.TilemapLayer|array} object2 - The second object or array of objects to check. Can be Phaser.Sprite, Phaser.Group, Phaser.Particles.Emitter or Phaser.TilemapLayer.
-     * @param {function} [collideCallback=null] - An optional callback function that is called if the objects collide. The two objects will be passed to this function in the same order in which you specified them, unless you are colliding Group vs. Sprite, in which case Sprite will always be the first parameter.
-     * @param {function} [processCallback=null] - A callback function that lets you perform additional checks against the two objects if they overlap. If this is set then collision will only happen if processCallback returns true. The two objects will be passed to this function in the same order in which you specified them, unless you are colliding Group vs. Sprite, in which case Sprite will always be the first parameter.
-     * @param {object} [callbackContext] - The context in which to run the callbacks.
+     * Checks for collision between two bodies and separates them if colliding ({@link https://gist.github.com/samme/cbb81dd19f564dcfe2232761e575063d details}). If you don't require separation then use {@link #overlap} instead.
      * @return {boolean} True if a collision occurred otherwise false.
      */
     public function collide(body1:Body, body2:Body, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
@@ -305,6 +331,99 @@ class World {
             }
 
             _total++;
+        }
+
+        return (_total > 0);
+
+    }
+
+    public function collideGroupVsGroup(group1:Group, group2:Group, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (group1.sortDirection != NONE && (group1.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group1);
+        }
+        if (group2.sortDirection != NONE && (group2.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group2);
+        }
+
+        _total = 0;
+
+        var objects1 = group1.objects;
+        var objects2 = group2.objects;
+        for (i in 0...objects1.length) {
+            var body1 = objects1[i];
+            for (j in 0...objects2.length) {
+                var body2 = objects2[j];
+
+                if (separate(body1, body2, processCallback, false))
+                {
+                    if (collideCallback != null)
+                    {
+                        collideCallback(body1, body2);
+                    }
+        
+                    _total++;
+                }
+            }
+        }
+
+        return (_total > 0);
+
+    }
+
+    public function collideGroupVsItself(group:Group, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (group.sortDirection != NONE && (group.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group);
+        }
+
+        _total = 0;
+
+        var objects = group.objects;
+        for (i in 0...objects.length) {
+            var body1 = objects[i];
+            for (j in 0...objects.length) {
+                var body2 = objects[j];
+
+                if (body1 != body2) {
+                    if (separate(body1, body2, processCallback, false))
+                    {
+                        if (collideCallback != null)
+                        {
+                            collideCallback(body1, body2);
+                        }
+            
+                        _total++;
+                    }
+                }
+            }
+        }
+
+        return (_total > 0);
+
+    }
+
+    public function collideBodyVsGroup(body:Body, group:Group, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (group.sortDirection != NONE && (group.sortDirection != INHERIT || sortDirection != NONE)) {
+            sort(group);
+        }
+
+        _total = 0;
+
+        var objects = group.objects;
+        for (i in 0...objects.length) {
+            var body2 = objects[i];
+
+            if (separate(body, body2, processCallback, false))
+            {
+                if (collideCallback != null)
+                {
+                    collideCallback(body, body2);
+                }
+    
+                _total++;
+            }
         }
 
         return (_total > 0);
