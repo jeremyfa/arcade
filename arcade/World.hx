@@ -197,12 +197,48 @@ class World {
 
     }
 
+    function getCollidableType(element:Collidable):Class<Dynamic> {
+
+        var clazz = Type.getClass(element);
+        switch clazz {
+            case Body: return Body;
+            case Group: return Group;
+            default:
+                if (Std.is(element, Body))
+                    return Body;
+                if (Std.is(element, Group))
+                    return Group;
+                return clazz;
+        }
+
+    }
+
+    public function overlap(element1:Collidable, ?element2:Collidable, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (element2 == null) {
+            return switch getCollidableType(element1) {
+                case Group: overlapGroupVsItself(cast element1, collideCallback, processCallback);
+                default: false;
+            }
+        }
+        else {
+            return switch [getCollidableType(element1), getCollidableType(element2)] {
+                case [Body, Body]: overlapBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
+                case [Body, Group]: overlapBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                case [Group, Body]: overlapBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
+                case [Group, Group]: overlapGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                default: false;
+            }
+        }
+
+    }
+
     /**
      * Checks for overlaps between two bodies. The objects can be Sprites, Groups or Emitters.
      * Unlike {@link #collide} the objects are NOT automatically separated or have any physics applied, they merely test for overlap results.
      * @return {boolean} True if an overlap occurred otherwise false.
      */
-    public function overlap(body1:Body, body2:Body, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
+    public function overlapBodyVsBody(body1:Body, body2:Body, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
     {
 
         _total = 0;
@@ -239,7 +275,7 @@ class World {
             for (j in 0...objects2.length) {
                 var body2 = objects2[j];
 
-                if (separate(body1, body2, processCallback, false))
+                if (separate(body1, body2, processCallback, true))
                 {
                     if (overlapCallback != null)
                     {
@@ -270,7 +306,7 @@ class World {
                 var body2 = objects[j];
 
                 if (body1 != body2) {
-                    if (separate(body1, body2, processCallback, false))
+                    if (separate(body1, body2, processCallback, true))
                     {
                         if (overlapCallback != null)
                         {
@@ -299,7 +335,7 @@ class World {
         for (i in 0...objects.length) {
             var body2 = objects[i];
 
-            if (separate(body, body2, processCallback, false))
+            if (separate(body, body2, processCallback, true))
             {
                 if (overlapCallback != null)
                 {
@@ -314,11 +350,31 @@ class World {
 
     }
 
+    public function collide(element1:Collidable, ?element2:Collidable, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+
+        if (element2 == null) {
+            return switch getCollidableType(element1) {
+                case Group: collideGroupVsItself(cast element1, collideCallback, processCallback);
+                default: false;
+            }
+        }
+        else {
+            return switch [getCollidableType(element1), getCollidableType(element2)] {
+                case [Body, Body]: collideBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
+                case [Body, Group]: collideBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                case [Group, Body]: collideBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
+                case [Group, Group]: collideGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                default: false;
+            }
+        }
+
+    }
+
     /**
      * Checks for collision between two bodies and separates them if colliding ({@link https://gist.github.com/samme/cbb81dd19f564dcfe2232761e575063d details}). If you don't require separation then use {@link #overlap} instead.
      * @return {boolean} True if a collision occurred otherwise false.
      */
-    public function collide(body1:Body, body2:Body, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
+    public function collideBodyVsBody(body1:Body, body2:Body, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
     {
 
         _total = 0;
