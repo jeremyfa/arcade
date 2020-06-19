@@ -928,6 +928,17 @@ class World {
                 body1.touchingRight = true;
                 body2.touchingNone = false;
                 body2.touchingLeft = true;
+
+                if (!overlapOnly) {
+                    if (body1.immovable) {
+                        body2.blockedLeft = true;
+                        body2.blockedNone = false;
+                    }
+                    if (body2.immovable) {
+                        body1.blockedRight = true;
+                        body1.blockedNone = false;
+                    }
+                }
             }
         }
         else if (body1.deltaX() < body2.deltaX())
@@ -945,6 +956,17 @@ class World {
                 body1.touchingLeft = true;
                 body2.touchingNone = false;
                 body2.touchingRight = true;
+
+                if (!overlapOnly) {
+                    if (body1.immovable) {
+                        body2.blockedRight = true;
+                        body2.blockedNone = false;
+                    }
+                    if (body2.immovable) {
+                        body1.blockedLeft = true;
+                        body1.blockedNone = false;
+                    }
+                }
             }
         }
 
@@ -993,6 +1015,17 @@ class World {
                 body1.touchingDown = true;
                 body2.touchingNone = false;
                 body2.touchingUp = true;
+
+                if (!overlapOnly) {
+                    if (body1.immovable) {
+                        body2.blockedUp = true;
+                        body2.blockedNone = false;
+                    }
+                    if (body2.immovable) {
+                        body1.blockedDown = true;
+                        body1.blockedNone = false;
+                    }
+                }
             }
         }
         else if (body1.deltaY() < body2.deltaY())
@@ -1010,6 +1043,17 @@ class World {
                 body1.touchingUp = true;
                 body2.touchingNone = false;
                 body2.touchingDown = true;
+
+                if (!overlapOnly) {
+                    if (body1.immovable) {
+                        body2.blockedDown = true;
+                        body2.blockedNone = false;
+                    }
+                    if (body2.immovable) {
+                        body1.blockedUp = true;
+                        body1.blockedNone = false;
+                    }
+                }
             }
         }
 

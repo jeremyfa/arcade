@@ -392,14 +392,24 @@ class Body
     public var wasTouchingRight:Bool = false;
 
     /**
-    * This object is populated with boolean values when the Body collides with the World bounds.
-    * For example if blocked.up is true then the Body cannot move up.
-    * @property {object} blocked - An object containing on which faces this Body is blocked from moving, if any (none, up, down, left, right).
+    * @property {boolean} blockedNone - If this Body being blocked by world bounds or another immovable object?
     */
     public var blockedNone:Bool = true;
+    /**
+    * @property {boolean} blockedNone - If this Body being blocked by upper world bounds or another immovable object above it?
+    */
     public var blockedUp:Bool = false;
+    /**
+    * @property {boolean} blockedNone - If this Body being blocked by lower world bounds or another immovable object below it?
+    */
     public var blockedDown:Bool = false;
+    /**
+    * @property {boolean} blockedNone - If this Body being blocked by left world bounds or another immovable object on the left?
+    */
     public var blockedLeft:Bool = false;
+    /**
+    * @property {boolean} blockedNone - If this Body being blocked by right world bounds or another immovable object on the right?
+    */
     public var blockedRight:Bool = false;
 
     /**
