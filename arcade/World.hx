@@ -275,14 +275,16 @@ class World {
             for (j in 0...objects2.length) {
                 var body2 = objects2[j];
 
-                if (separate(body1, body2, processCallback, true))
-                {
-                    if (overlapCallback != null)
+                if (body1 != body2) {
+                    if (separate(body1, body2, processCallback, true))
                     {
-                        overlapCallback(body1, body2);
+                        if (overlapCallback != null)
+                        {
+                            overlapCallback(body1, body2);
+                        }
+            
+                        _total++;
                     }
-        
-                    _total++;
                 }
             }
         }
@@ -335,14 +337,16 @@ class World {
         for (i in 0...objects.length) {
             var body2 = objects[i];
 
-            if (separate(body, body2, processCallback, true))
-            {
-                if (overlapCallback != null)
+            if (body != body2) {
+                if (separate(body, body2, processCallback, true))
                 {
-                    overlapCallback(body, body2);
+                    if (overlapCallback != null)
+                    {
+                        overlapCallback(body, body2);
+                    }
+        
+                    _total++;
                 }
-    
-                _total++;
             }
         }
 
@@ -411,14 +415,16 @@ class World {
             for (j in 0...objects2.length) {
                 var body2 = objects2[j];
 
-                if (separate(body1, body2, processCallback, false))
-                {
-                    if (collideCallback != null)
+                if (body1 != body2) {
+                    if (separate(body1, body2, processCallback, false))
                     {
-                        collideCallback(body1, body2);
+                        if (collideCallback != null)
+                        {
+                            collideCallback(body1, body2);
+                        }
+            
+                        _total++;
                     }
-        
-                    _total++;
                 }
             }
         }
@@ -471,14 +477,16 @@ class World {
         for (i in 0...objects.length) {
             var body2 = objects[i];
 
-            if (separate(body, body2, processCallback, false))
-            {
-                if (collideCallback != null)
+            if (body != body2) {
+                if (separate(body, body2, processCallback, false))
                 {
-                    collideCallback(body, body2);
+                    if (collideCallback != null)
+                    {
+                        collideCallback(body, body2);
+                    }
+        
+                    _total++;
                 }
-    
-                _total++;
             }
         }
 
