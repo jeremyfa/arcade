@@ -199,7 +199,11 @@ class World {
 
     function getCollidableType(element:Collidable):Class<Dynamic> {
 
+        #if js
+        var clazz:Class<Collidable> = untyped o.__class__;
+        #else
         var clazz = Type.getClass(element);
+        #end
         switch clazz {
             case Body: return Body;
             case Group: return Group;
