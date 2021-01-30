@@ -222,13 +222,26 @@ class World {
             }
         }
         else {
-            return switch [getCollidableType(element1), getCollidableType(element2)] {
-                case [Body, Body]: overlapBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
-                case [Body, Group]: overlapBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
-                case [Group, Body]: overlapBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
-                case [Group, Group]: overlapGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
-                default: false;
+            switch getCollidableType(element1) {
+                default:
+                case Body:
+                    switch getCollidableType(element2) {
+                        default:
+                        case Body:
+                            overlapBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
+                        case Group:
+                            overlapBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                    }
+                case Group:
+                    switch getCollidableType(element2) {
+                        default:
+                        case Body:
+                            overlapBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
+                        case Group:
+                            overlapGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                    }
             }
+            return false;
         }
 
     }
@@ -363,13 +376,26 @@ class World {
             }
         }
         else {
-            return switch [getCollidableType(element1), getCollidableType(element2)] {
-                case [Body, Body]: collideBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
-                case [Body, Group]: collideBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
-                case [Group, Body]: collideBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
-                case [Group, Group]: collideGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
-                default: false;
+            switch getCollidableType(element1) {
+                default:
+                case Body:
+                    switch getCollidableType(element2) {
+                        default:
+                        case Body:
+                            collideBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
+                        case Group:
+                            collideBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                    }
+                case Group:
+                    switch getCollidableType(element2) {
+                        default:
+                        case Body:
+                            collideBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
+                        case Group:
+                            collideGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                    }
             }
+            return false;
         }
 
     }
