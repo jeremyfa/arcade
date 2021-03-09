@@ -45,6 +45,11 @@ class Body
     public var enable:Bool = true;
 
     /**
+    * If `true` World.separate will always separate on the X axis before Y when this body is involved. Otherwise it will check gravity totals first.
+    */
+    public var forceX:Bool = false;
+
+    /**
     * If `true` this Body is using circular collision detection. If `false` it is using rectangular.
     * Use `Body.setCircle` to control the collision shape this Body uses.
     * @property {boolean} isCircle

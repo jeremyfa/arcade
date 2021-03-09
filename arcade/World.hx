@@ -637,9 +637,10 @@ class World {
 
         var resultX = false;
         var resultY = false;
+        var forceX = this.forceX || body1.forceX || body2.forceX;
 
         //  Do we separate on x or y first?
-        if (this.forceX || Math.abs(this.gravityY + body1.gravityY) < Math.abs(this.gravityX + body1.gravityX))
+        if (forceX || Math.abs(this.gravityY + body1.gravityY) < Math.abs(this.gravityX + body1.gravityX))
         {
             resultX = this.separateX(body1, body2, overlapOnly);
 
