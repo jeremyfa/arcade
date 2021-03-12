@@ -1,5 +1,7 @@
 package arcade;
 
+using arcade.Extensions;
+
 /**
  * @author       Timo Hausmann
  * @author       Richard Davey <rich@photonstorm.com>
@@ -131,8 +133,9 @@ class QuadTree
     public function populate(group:Group):Void
     {
 
-        for (i in 0...group.objects.length) {
-            insert(group.objects[i]);
+        var objects = group.objects;
+        for (i in 0...objects.length) {
+            insert(objects.unsafeGet(i));
         }
 
     }
@@ -178,7 +181,7 @@ class QuadTree
 
             if (index != -1)
             {
-                this.nodes[index].insert(body);
+                this.nodes.unsafeGet(index).insert(body);
                 return;
             }
         }
@@ -196,13 +199,13 @@ class QuadTree
             //  Add objects to subnodes
             while (i < this.objects.length)
             {
-                var item = this.objects[i];
+                var item = this.objects.unsafeGet(i);
                 index = this.getIndex(item.left, item.top, item.right, item.bottom);
 
                 if (index != -1)
                 {
                     //  this is expensive - see what we can do about it
-                    this.nodes[index].insert(this.objects.splice(i, 1)[0]);
+                    this.nodes.unsafeGet(index).insert(this.objects.splice(i, 1)[0]);
                 }
                 else
                 {
@@ -277,15 +280,20 @@ class QuadTree
             //  If rect fits into a subnode ..
             if (index != -1)
             {
-                returnObjects = returnObjects.concat(this.nodes[index].retrieve(left, top, right, bottom));
+                var retrieved = this.nodes.unsafeGet(index).retrieve(left, top, right, bottom);
+                for (i in 0...retrieved.length) {
+                    returnObjects.push(retrieved.unsafeGet(i));
+                }
             }
             else
             {
-                //  If rect does not fit into a subnode, check it against all subnodes (unrolled for speed)
-                returnObjects = returnObjects.concat(this.nodes[0].retrieve(left, top, right, bottom));
-                returnObjects = returnObjects.concat(this.nodes[1].retrieve(left, top, right, bottom));
-                returnObjects = returnObjects.concat(this.nodes[2].retrieve(left, top, right, bottom));
-                returnObjects = returnObjects.concat(this.nodes[3].retrieve(left, top, right, bottom));
+                //  If rect does not fit into a subnode, check it against all subnodes
+                for (n in 0...4) {
+                    var retrieved = this.nodes.unsafeGet(n).retrieve(left, top, right, bottom);
+                    for (i in 0...retrieved.length) {
+                        returnObjects.push(retrieved.unsafeGet(i));
+                    }
+                }
             }
         }
 
@@ -300,7 +308,7 @@ class QuadTree
     public function clear()
     {
         for (i in 0...nodes.length) {
-            nodes[i].recycle();
+            nodes.unsafeGet(i).recycle();
         }
 
         #if cpp
@@ -339,8 +347,8 @@ class QuadTreePool {
 
             // Create new
             var quadTree = new QuadTree(this, x, y, width, height, maxObjects, maxLevels, level);
-            _nextPoolIndex++;
             _pool.push(quadTree);
+            _nextPoolIndex++;
             return quadTree;
         }
         else {
@@ -348,6 +356,7 @@ class QuadTreePool {
             // Reuse an available one
             var quadTree = _pool[_nextPoolIndex];
             _nextPoolIndex++;
+            quadTree.reset(x, y, width, height, maxObjects, maxLevels, level);
             return quadTree;
         }
 

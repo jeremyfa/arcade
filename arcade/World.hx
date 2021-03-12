@@ -1,5 +1,7 @@
 package arcade;
 
+using arcade.Extensions;
+
 /**
 * @author       Richard Davey <rich@photonstorm.com>
 * @copyright    2016 Photon Storm Ltd.
@@ -1260,20 +1262,24 @@ class World {
      * @param {object} [callbackArg] - An argument to pass to the callback.
      * @return {PIXI.DisplayObject[]} An array of the Sprites from the Group that overlapped the coordinates.
      */
-    public function getObjectsAtLocation<T>(x:Float, y:Float, group:Group, ?callback:T->Body->Void, ?callbackArg:T):Array<Body>
+    public function getObjectsAtLocation<T>(x:Float, y:Float, group:Group, ?callback:T->Body->Void, ?callbackArg:T, ?output:Array<Body>):Array<Body>
     {
 
         quadTree.clear();
         quadTree.reset(boundsX, boundsY, boundsWidth, boundsHeight, maxObjects, maxLevels);
         quadTree.populate(group);
 
-        var output:Array<Body> = [];
+        if (ouput == null)
+            output = [];
+        else {
+            Extensions.setArrayLength(output, 0);
+        }
 
         var items = quadTree.retrieve(x, y, 1, 1);
 
         for (i in 0...items.length)
         {
-            var item = items[i];
+            var item = items.unsafeGet(i);
 
             if (item.hitTest(x, y))
             {
