@@ -17,7 +17,7 @@ package arcade;
 @:allow(arcade.World)
 class Body
 {
-    /** A property to hold any data related to this body. Can be useful if building a system on top if this one. */
+    /** A property to hold any data related to this body. Can be useful if building a larger system on top of this one. */
     public var data:Dynamic = null;
 
     /** The list of groups that contain this body (can be null if there are no groups). */
@@ -479,8 +479,9 @@ class Body
 
     /**
     * @property {function} movementCallback - Optional callback. If set, invoked during the running of `moveTo` or `moveFrom` events.
+    * Note: this is not an event (emit{X}) because we are expecting a boolean return value.
     */
-    public var movementCallback:Body->Float->Float->Float->Bool = null;
+    public var movementCallback:(body:Body,velocityX:Float,velocityY:Float,percent:Float)->Bool = null;
 
     /**
     * @property {boolean} _reset - Internal cache var.
