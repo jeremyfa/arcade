@@ -1,6 +1,11 @@
 package arcade;
 
-class Tile {
+#if arcade_tile_physics
+
+class Tile implements Collidable {
+
+    /** A property to hold any data related to this tile. Can be useful if building a larger system on top of this one. */
+    public var data:Dynamic = null;
 
     /**
     * @property {number} index - The index of this tile within the map data corresponding to the tileset, or -1 if this represents a blank/null tile.
@@ -139,6 +144,12 @@ class Tile {
 
     public function new(index:Int, x:Float, y:Float, width:Float, height:Float) {
 
+        update(index, x, y, width, height);
+
+    }
+
+    public function update(index:Int, x:Float, y:Float, width:Float, height:Float) {
+
         this.index = index;
         this.x = x;
         this.y = y;
@@ -157,7 +168,7 @@ class Tile {
     * @param {number} y - The y coordinate to test.
     * @return {boolean} True if the coordinates are within this Tile, otherwise false.
     */
-    public function containsPoint(x:Float, y:Float) {
+    inline public function containsPoint(x:Float, y:Float) {
 
         return !(x < this.worldX || y < this.worldY || x > this.right || y > this.bottom);
 
@@ -172,29 +183,14 @@ class Tile {
     * @param {number} right - The right point.
     * @param {number} bottom - The bottom point.
     */
-    public function intersects(x:Float, y:Float, right:Float, bottom:Float):Bool {
+    inline public function intersects(x:Float, y:Float, right:Float, bottom:Float):Bool {
 
-        if (right <= this.worldX)
-        {
-            return false;
-        }
-
-        if (bottom <= this.worldY)
-        {
-            return false;
-        }
-
-        if (x >= this.worldX + this.width)
-        {
-            return false;
-        }
-
-        if (y >= this.worldY + this.height)
-        {
-            return false;
-        }
-
-        return true;
+        return (
+            right > this.worldX &&
+            bottom > this.worldY &&
+            x < this.worldX + this.width &&
+            y < this.worldY + this.height
+        );
 
     }
 
@@ -205,3 +201,5 @@ class Tile {
     }
 
 }
+
+#end

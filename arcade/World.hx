@@ -378,7 +378,11 @@ class World {
 
     }
 
-    public function collide(element1:Collidable, ?element2:Collidable, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool {
+    public function collide(
+        element1:Collidable, ?element2:Collidable,
+        ?collideCallback:Body->Body->Void,
+        ?processCallback:Body->Body->Bool
+        ):Bool {
 
         if (element2 == null) {
             return switch getCollidableType(element1) {
@@ -934,342 +938,6 @@ class World {
         body2.emitCollide(body2, body1);
 
         return true;
-
-    }
-    
-    function separateTiles(body:Body, tiles:Array<Tile>, offsetX:Float, offsetY:Float, ?collideCallback:Body->Tile->Void, ?processCallback:Body->Tile->Bool, overlapOnly:Bool):Bool {
-
-        _total = 0;
-
-        if (tiles.length == 0) {
-            return false;
-        }
-
-        for (i in 0...tiles.length)
-        {
-            var tile = tiles.unsafeGet(i);
-            
-            if (processCallback != null)
-            {
-                if (processCallback(body, tile))
-                {
-                    if (this.separateTile(i, body, tile, offsetX, offsetY, overlapOnly))
-                    {
-                        _total++;
-
-                        if (collideCallback != null)
-                        {
-                            collideCallback(body, tile);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (this.separateTile(i, body, tile, offsetX, offsetY, overlapOnly))
-                {
-                    _total++;
-
-                    if (collideCallback != null)
-                    {
-                        collideCallback(body, tile);
-                    }
-                }
-            }
-        }
-
-        return (_total > 0);
-
-    }
-
-    /**
-    * The core separation function to separate a physics body and a tile.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#separateTile
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {Phaser.Tile} tile - The tile to collide against.
-    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
-    * @return {boolean} Returns true if the body was separated, otherwise false.
-    */
-    function separateTile(i:Int, body:Body, tile:Tile, offsetX:Float, offsetY:Float, overlapOnly:Bool):Bool {
-
-        if (!body.enable) {
-            return false;
-        }
-
-        //  We re-check for collision in case body was separated in a previous step
-        if (!tile.intersects(
-            body.x - offsetX,
-            body.y - offsetY,
-            body.right - offsetX,
-            body.bottom - offsetY)) {
-                //  no collision so bail out (separated in a previous step)
-                return false;
-        }
-        else if (overlapOnly) {
-            //  There is an overlap, and we don't need to separate. Bail.
-            return true;
-        }
-
-        //  They overlap. Any custom callbacks?
-
-        //  A local callback always takes priority over a layer level callback
-        if (tile.collisionCallback != null && !tile.collisionCallback(body, tile))
-        {
-            //  If it returns true then we can carry on, otherwise we should abort.
-            return false;
-        }
-
-        //  We don't need to go any further if this tile doesn't actually separate
-        if (!tile.faceLeft && !tile.faceRight && !tile.faceTop && !tile.faceBottom)
-        {
-            //   This could happen if the tile was meant to be collided with re: a callback, but otherwise isn't needed for separation
-            return false;
-        }
-
-        var ox:Float = 0;
-        var oy:Float = 0;
-        var minX:Float = 0;
-        var minY:Float = 1;
-
-        if (body.deltaAbsX() > body.deltaAbsY())
-        {
-            //  Moving faster horizontally, check X axis first
-            minX = -1;
-        }
-        else if (body.deltaAbsX() < body.deltaAbsY())
-        {
-            //  Moving faster vertically, check Y axis first
-            minY = -1;
-        }
-
-        if (body.deltaX() != 0 && body.deltaY() != 0 && (tile.faceLeft || tile.faceRight) && (tile.faceTop || tile.faceBottom))
-        {
-            //  We only need do this if both axis have checking faces AND we're moving in both directions
-            minX = Math.min(Math.abs((body.x - offsetX) - tile.right), Math.abs((body.right - offsetX) - tile.left));
-            minY = Math.min(Math.abs((body.y - offsetY) - tile.bottom), Math.abs((body.bottom - offsetY) - tile.top));
-        }
-
-        if (minX < minY)
-        {
-            if (tile.faceLeft || tile.faceRight)
-            {
-                ox = this.tileCheckX(body, tile, offsetX, offsetY);
-
-                //  That's horizontal done, check if we still intersects? If not then we can return now
-                if (ox != 0 && !tile.intersects((body.x - offsetX), (body.y - offsetY), (body.right - offsetX), (body.bottom - offsetY)))
-                {
-                    return true;
-                }
-            }
-
-            if (tile.faceTop || tile.faceBottom)
-            {
-                oy = this.tileCheckY(body, tile, offsetX, offsetY);
-            }
-        }
-        else
-        {
-            if (tile.faceTop || tile.faceBottom)
-            {
-                oy = this.tileCheckY(body, tile, offsetX, offsetY);
-
-                //  That's vertical done, check if we still intersects? If not then we can return now
-                if (oy != 0 && !tile.intersects((body.x - offsetX), (body.y - offsetY), (body.right - offsetX), (body.bottom - offsetY)))
-                {
-                    return true;
-                }
-            }
-
-            if (tile.faceLeft || tile.faceRight)
-            {
-                ox = this.tileCheckX(body, tile, offsetX, offsetY);
-            }
-        }
-
-        return (ox != 0 || oy != 0);
-    }
-
-    /**
-    * Check the body against the given tile on the X axis.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#tileCheckX
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {Phaser.Tile} tile - The tile to check.
-    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
-    * @return {number} The amount of separation that occurred.
-    */
-    function tileCheckX(body:Body, tile:Tile, offsetX:Float, offsetY:Float):Float {
-
-        var ox:Float = 0;
-
-        if (body.deltaX() < 0 && !body.blockedLeft && tile.collideRight && body.checkCollisionLeft)
-        {
-            //  Body is moving LEFT
-            if (tile.faceRight && (body.x - offsetX) < tile.right)
-            {
-                ox = (body.x - offsetX) - tile.right;
-
-                if (ox < -tileBias)
-                {
-                    ox = 0;
-                }
-            }
-        }
-        else if (body.deltaX() > 0 && !body.blockedRight && tile.collideLeft && body.checkCollisionRight)
-        {
-            //  Body is moving RIGHT
-            if (tile.faceLeft && (body.right - offsetX) > tile.left)
-            {
-                ox = (body.right - offsetX) - tile.left;
-
-                if (ox > tileBias)
-                {
-                    ox = 0;
-                }
-            }
-        }
-
-        if (ox != 0)
-        {
-            if (body.customSeparateX)
-            {
-                body.overlapX = ox;
-            }
-            else
-            {
-                this.processTileSeparationX(body, ox);
-            }
-        }
-
-        return ox;
-
-    }
-
-    /**
-    * Check the body against the given tile on the Y axis.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#tileCheckY
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {Phaser.Tile} tile - The tile to check.
-    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
-    * @return {number} The amount of separation that occurred.
-    */
-    function tileCheckY(body:Body, tile:Tile, offsetX:Float, offsetY:Float):Float {
-
-        var oy:Float = 0;
-
-        if (body.deltaY() < 0 && !body.blockedUp && tile.collideDown && body.checkCollisionUp)
-        {
-            //  Body is moving UP
-            if (tile.faceBottom && (body.y - offsetY) < tile.bottom)
-            {
-                oy = (body.y - offsetY) - tile.bottom;
-
-                if (oy < -tileBias)
-                {
-                    oy = 0;
-                }
-            }
-        }
-        else if (body.deltaY() > 0 && !body.blockedDown && tile.collideUp && body.checkCollisionDown)
-        {
-            //  Body is moving DOWN
-            if (tile.faceTop && (body.bottom - offsetY) > tile.top)
-            {
-                oy = (body.bottom - offsetY) - tile.top;
-
-                if (oy > tileBias)
-                {
-                    oy = 0;
-                }
-            }
-        }
-
-        if (oy != 0)
-        {
-            if (body.customSeparateY)
-            {
-                body.overlapY = oy;
-            }
-            else
-            {
-                this.processTileSeparationY(body, oy);
-            }
-        }
-
-        return oy;
-
-    }
-
-    /**
-    * Internal function to process the separation of a physics body from a tile.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#processTileSeparationX
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {number} x - The x separation amount.
-    */
-    function processTileSeparationX(body:Body, x:Float):Void {
-
-        if (x < 0)
-        {
-            body.blockedNone = false;
-            body.blockedLeft = true;
-        }
-        else if (x > 0)
-        {
-            body.blockedNone = false;
-            body.blockedRight = true;
-        }
-
-        body.x -= x;
-
-        if (body.bounceX == 0)
-        {
-            body.velocityX = 0;
-        }
-        else
-        {
-            body.velocityX = -body.velocityX * body.bounceX;
-        }
-
-    }
-
-    /**
-    * Internal function to process the separation of a physics body from a tile.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#processTileSeparationY
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {number} y - The y separation amount.
-    */
-    function processTileSeparationY(body:Body, y:Float):Void {
-
-        if (y < 0)
-        {
-            body.blockedNone = false;
-            body.blockedUp = true;
-        }
-        else if (y > 0)
-        {
-            body.blockedNone = false;
-            body.blockedDown = true;
-        }
-
-        body.y -= y;
-
-        if (body.bounceY == 0)
-        {
-            body.velocityY = 0;
-        }
-        else
-        {
-            body.velocityY = -body.velocityY * body.bounceY;
-        }
 
     }
 
@@ -2046,5 +1714,350 @@ class World {
     }
 
     inline static var HALF_PI:Float = 1.5707963267948966;
+
+
+#if arcade_tile_physics
+
+    // The following was ported but is not used nor tested
+    // so is disabled by default
+
+    function separateTiles(body:Body, tiles:Array<Tile>, offsetX:Float, offsetY:Float, ?collideCallback:Body->Tile->Void, ?processCallback:Body->Tile->Bool, overlapOnly:Bool):Bool {
+
+        _total = 0;
+
+        if (tiles.length == 0) {
+            return false;
+        }
+
+        for (i in 0...tiles.length)
+        {
+            var tile = tiles.unsafeGet(i);
+            
+            if (processCallback != null)
+            {
+                if (processCallback(body, tile))
+                {
+                    if (this.separateTile(i, body, tile, offsetX, offsetY, overlapOnly))
+                    {
+                        _total++;
+
+                        if (collideCallback != null)
+                        {
+                            collideCallback(body, tile);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (this.separateTile(i, body, tile, offsetX, offsetY, overlapOnly))
+                {
+                    _total++;
+
+                    if (collideCallback != null)
+                    {
+                        collideCallback(body, tile);
+                    }
+                }
+            }
+        }
+
+        return (_total > 0);
+
+    }
+
+    /**
+    * The core separation function to separate a physics body and a tile.
+    *
+    * @private
+    * @method Phaser.Physics.Arcade#separateTile
+    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+    * @param {Phaser.Tile} tile - The tile to collide against.
+    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
+    * @return {boolean} Returns true if the body was separated, otherwise false.
+    */
+    function separateTile(i:Int, body:Body, tile:Tile, offsetX:Float, offsetY:Float, overlapOnly:Bool):Bool {
+
+        if (!body.enable) {
+            return false;
+        }
+
+        //  We re-check for collision in case body was separated in a previous step
+        if (!tile.intersects(
+            body.x - offsetX,
+            body.y - offsetY,
+            body.right - offsetX,
+            body.bottom - offsetY)) {
+                //  no collision so bail out (separated in a previous step)
+                return false;
+        }
+        else if (overlapOnly) {
+            //  There is an overlap, and we don't need to separate. Bail.
+            return true;
+        }
+
+        //  They overlap. Any custom callbacks?
+
+        //  A local callback always takes priority over a layer level callback
+        if (tile.collisionCallback != null && !tile.collisionCallback(body, tile))
+        {
+            //  If it returns true then we can carry on, otherwise we should abort.
+            return false;
+        }
+
+        //  We don't need to go any further if this tile doesn't actually separate
+        if (!tile.faceLeft && !tile.faceRight && !tile.faceTop && !tile.faceBottom)
+        {
+            //   This could happen if the tile was meant to be collided with re: a callback, but otherwise isn't needed for separation
+            return false;
+        }
+
+        var ox:Float = 0;
+        var oy:Float = 0;
+        var minX:Float = 0;
+        var minY:Float = 1;
+
+        if (body.deltaAbsX() > body.deltaAbsY())
+        {
+            //  Moving faster horizontally, check X axis first
+            minX = -1;
+        }
+        else if (body.deltaAbsX() < body.deltaAbsY())
+        {
+            //  Moving faster vertically, check Y axis first
+            minY = -1;
+        }
+
+        if (body.deltaX() != 0 && body.deltaY() != 0 && (tile.faceLeft || tile.faceRight) && (tile.faceTop || tile.faceBottom))
+        {
+            //  We only need do this if both axis have checking faces AND we're moving in both directions
+            minX = Math.min(Math.abs((body.x - offsetX) - tile.right), Math.abs((body.right - offsetX) - tile.left));
+            minY = Math.min(Math.abs((body.y - offsetY) - tile.bottom), Math.abs((body.bottom - offsetY) - tile.top));
+        }
+
+        if (minX < minY)
+        {
+            trace('check X');
+            if (tile.faceLeft || tile.faceRight)
+            {
+                ox = this.tileCheckX(body, tile, offsetX, offsetY);
+
+                //  That's horizontal done, check if we still intersects? If not then we can return now
+                if (ox != 0 && !tile.intersects((body.x - offsetX), (body.y - offsetY), (body.right - offsetX), (body.bottom - offsetY)))
+                {
+                    return true;
+                }
+            }
+
+            if (tile.faceTop || tile.faceBottom)
+            {
+                oy = this.tileCheckY(body, tile, offsetX, offsetY);
+            }
+        }
+        else
+        {
+            if (tile.faceTop || tile.faceBottom)
+            {
+                oy = this.tileCheckY(body, tile, offsetX, offsetY);
+
+                //  That's vertical done, check if we still intersects? If not then we can return now
+                if (oy != 0 && !tile.intersects((body.x - offsetX), (body.y - offsetY), (body.right - offsetX), (body.bottom - offsetY)))
+                {
+                    return true;
+                }
+            }
+
+            if (tile.faceLeft || tile.faceRight)
+            {
+                ox = this.tileCheckX(body, tile, offsetX, offsetY);
+            }
+        }
+
+        return (ox != 0 || oy != 0);
+    }
+
+    /**
+    * Check the body against the given tile on the X axis.
+    *
+    * @private
+    * @method Phaser.Physics.Arcade#tileCheckX
+    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+    * @param {Phaser.Tile} tile - The tile to check.
+    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
+    * @return {number} The amount of separation that occurred.
+    */
+    function tileCheckX(body:Body, tile:Tile, offsetX:Float, offsetY:Float):Float {
+
+        var ox:Float = 0;
+
+        if (body.deltaX() < 0 && !body.blockedLeft && tile.collideRight && body.checkCollisionLeft)
+        {
+            //  Body is moving LEFT
+            if (tile.faceRight && (body.x - offsetX) < tile.right)
+            {
+                ox = (body.x - offsetX) - tile.right;
+
+                if (ox < -tileBias)
+                {
+                    ox = 0;
+                }
+            }
+        }
+        else if (body.deltaX() > 0 && !body.blockedRight && tile.collideLeft && body.checkCollisionRight)
+        {
+            //  Body is moving RIGHT
+            if (tile.faceLeft && (body.right - offsetX) > tile.left)
+            {
+                ox = (body.right - offsetX) - tile.left;
+
+                if (ox > tileBias)
+                {
+                    ox = 0;
+                }
+            }
+        }
+
+        if (ox != 0)
+        {
+            if (body.customSeparateX)
+            {
+                body.overlapX = ox;
+            }
+            else
+            {
+                this.processTileSeparationX(body, ox);
+            }
+        }
+
+        return ox;
+
+    }
+
+    /**
+    * Check the body against the given tile on the Y axis.
+    *
+    * @private
+    * @method Phaser.Physics.Arcade#tileCheckY
+    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+    * @param {Phaser.Tile} tile - The tile to check.
+    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
+    * @return {number} The amount of separation that occurred.
+    */
+    function tileCheckY(body:Body, tile:Tile, offsetX:Float, offsetY:Float):Float {
+
+        var oy:Float = 0;
+
+        if (body.deltaY() < 0 && !body.blockedUp && tile.collideDown && body.checkCollisionUp)
+        {
+            //  Body is moving UP
+            if (tile.faceBottom && (body.y - offsetY) < tile.bottom)
+            {
+                oy = (body.y - offsetY) - tile.bottom;
+
+                if (oy < -tileBias)
+                {
+                    oy = 0;
+                }
+            }
+        }
+        else if (body.deltaY() > 0 && !body.blockedDown && tile.collideUp && body.checkCollisionDown)
+        {
+            //  Body is moving DOWN
+            if (tile.faceTop && (body.bottom - offsetY) > tile.top)
+            {
+                oy = (body.bottom - offsetY) - tile.top;
+
+                if (oy > 32)
+                {
+                    oy = 0;
+                }
+            }
+        }
+
+        if (oy != 0)
+        {
+            if (body.customSeparateY)
+            {
+                body.overlapY = oy;
+            }
+            else
+            {
+                this.processTileSeparationY(body, oy);
+            }
+        }
+
+        return oy;
+
+    }
+
+    /**
+    * Internal function to process the separation of a physics body from a tile.
+    *
+    * @private
+    * @method Phaser.Physics.Arcade#processTileSeparationX
+    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+    * @param {number} x - The x separation amount.
+    */
+    function processTileSeparationX(body:Body, x:Float):Void {
+
+        if (x < 0)
+        {
+            body.blockedNone = false;
+            body.blockedLeft = true;
+        }
+        else if (x > 0)
+        {
+            body.blockedNone = false;
+            body.blockedRight = true;
+        }
+
+        body.x -= x;
+
+        if (body.bounceX == 0)
+        {
+            body.velocityX = 0;
+        }
+        else
+        {
+            body.velocityX = -body.velocityX * body.bounceX;
+        }
+
+    }
+
+    /**
+    * Internal function to process the separation of a physics body from a tile.
+    *
+    * @private
+    * @method Phaser.Physics.Arcade#processTileSeparationY
+    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+    * @param {number} y - The y separation amount.
+    */
+    function processTileSeparationY(body:Body, y:Float):Void {
+
+        if (y < 0)
+        {
+            body.blockedNone = false;
+            body.blockedUp = true;
+        }
+        else if (y > 0)
+        {
+            body.blockedNone = false;
+            body.blockedDown = true;
+        }
+
+        body.y -= y;
+
+        if (body.bounceY == 0)
+        {
+            body.velocityY = 0;
+        }
+        else
+        {
+            body.velocityY = -body.velocityY * body.bounceY;
+        }
+
+    }
+
+#end
 
 }
