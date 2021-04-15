@@ -100,6 +100,8 @@ class QuadTree
     */
     public function reset(x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0)
     {
+        this.maxObjects = maxObjects;
+        this.maxLevels = maxLevels;
 
         boundsX = Math.round(x);
         boundsY = Math.round(y);
@@ -170,7 +172,6 @@ class QuadTree
     */
     public function insert(body:Body):Void
     {
-
         var i:Int = 0;
         var index:Int = -1;
 
@@ -205,7 +206,8 @@ class QuadTree
                 if (index != -1)
                 {
                     //  this is expensive - see what we can do about it
-                    this.nodes.unsafeGet(index).insert(this.objects.splice(i, 1)[0]);
+                    this.objects.splice(i, 1);
+                    this.nodes.unsafeGet(index).insert(item);
                 }
                 else
                 {
@@ -229,7 +231,19 @@ class QuadTree
         //  default is that rect doesn't fit, i.e. it straddles the internal quadrants
         var index = -1;
 
-        if (left < this.boundsRight && right < this.boundsRight)
+        if (right < this.boundsX) {
+            return index;
+        }
+        else if (bottom < this.boundsY) {
+            return index;
+        }
+        else if (left > this.boundsX + this.boundsWidth) {
+            return index;
+        }
+        else if (top > this.boundsY + this.boundsHeight) {
+            return index;
+        }
+        else if (left < this.boundsRight && right < this.boundsRight)
         {
             if (top < this.boundsBottom && bottom < this.boundsBottom)
             {
