@@ -15,7 +15,7 @@ package arcade;
 * @param {Phaser.Sprite} sprite - The Sprite object this physics body belongs to.
 */
 @:allow(arcade.World)
-class Body
+class Body implements Collidable
 {
     /** A property to hold any data related to this body. Can be useful if building a larger system on top of this one. */
     public var data:Dynamic = null;
