@@ -20,6 +20,9 @@ class Body implements Collidable
     /** A property to hold any data related to this body. Can be useful if building a larger system on top of this one. */
     public var data:Dynamic = null;
 
+    /** A property to hold any index value related to this body. Can be useful if building a larger system on top of this one. */
+    public var index:Int = -1;
+
     /** The list of groups that contain this body (can be null if there are no groups). */
     @:allow(arcade.Group)
     public var groups(default, null):Array<Group> = null;
