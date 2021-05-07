@@ -215,9 +215,9 @@ class World {
             case Body: return Body;
             case Group: return Group;
             default:
-                if (Std.is(element, Body))
+                if (Std.isOfType(element, Body))
                     return Body;
-                if (Std.is(element, Group))
+                if (Std.isOfType(element, Group))
                     return Group;
                 return clazz;
         }
