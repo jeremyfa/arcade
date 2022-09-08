@@ -239,17 +239,17 @@ class World {
                     switch getCollidableType(element2) {
                         default:
                         case Body:
-                            overlapBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
+                            return overlapBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
                         case Group:
-                            overlapBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                            return overlapBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
                     }
                 case Group:
                     switch getCollidableType(element2) {
                         default:
                         case Body:
-                            overlapBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
+                            return overlapBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
                         case Group:
-                            overlapGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                            return overlapGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
                     }
             }
             return false;
@@ -306,7 +306,7 @@ class World {
                         {
                             overlapCallback(body1, body2);
                         }
-            
+
                         _total++;
                     }
                 }
@@ -338,7 +338,7 @@ class World {
                         {
                             overlapCallback(body1, body2);
                         }
-            
+
                         _total++;
                     }
                 }
@@ -368,7 +368,7 @@ class World {
                     {
                         overlapCallback(body, body2);
                     }
-        
+
                     _total++;
                 }
             }
@@ -397,17 +397,17 @@ class World {
                     switch getCollidableType(element2) {
                         default:
                         case Body:
-                            collideBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
+                            return collideBodyVsBody(cast element1, cast element2, collideCallback, processCallback);
                         case Group:
-                            collideBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                            return collideBodyVsGroup(cast element1, cast element2, collideCallback, processCallback);
                     }
                 case Group:
                     switch getCollidableType(element2) {
                         default:
                         case Body:
-                            collideBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
+                            return collideBodyVsGroup(cast element2, cast element1, collideCallback, processCallback);
                         case Group:
-                            collideGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
+                            return collideGroupVsGroup(cast element1, cast element2, collideCallback, processCallback);
                     }
             }
             return false;
@@ -463,7 +463,7 @@ class World {
                         {
                             collideCallback(body1, body2);
                         }
-            
+
                         _total++;
                     }
                 }
@@ -495,7 +495,7 @@ class World {
                         {
                             collideCallback(body1, body2);
                         }
-            
+
                         _total++;
                     }
                 }
@@ -525,7 +525,7 @@ class World {
                     {
                         collideCallback(body, body2);
                     }
-        
+
                     _total++;
                 }
             }
@@ -1732,7 +1732,7 @@ class World {
         for (i in 0...tiles.length)
         {
             var tile = tiles.unsafeGet(i);
-            
+
             if (processCallback != null)
             {
                 if (processCallback(body, tile))
