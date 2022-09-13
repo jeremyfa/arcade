@@ -1,5 +1,7 @@
 package arcade;
 
+import arcade.QuadTree.QuadTreePool;
+
 using arcade.Extensions;
 
 /**
@@ -52,14 +54,20 @@ class World {
     /** Used when colliding a Sprite vs. a Group, or a Group vs. a Group, this defines the direction the sort is based on. Default is `LEFT_RIGHT`. */
     public var sortDirection:SortDirection = SortDirection.LEFT_RIGHT;
 
-    /** If true the QuadTree will not be used for any collision. QuadTrees are great if objects are well spread out in your game, otherwise they are a performance hit. If you enable this you can disable on a per body basis via `Body.skipQuadTree`. */
-    public var skipQuadTree:Bool = true;
+    /** If `true` the QuadTree will not be used for any collision. QuadTrees are great if objects are well spread out in your game, otherwise they are a performance hit. If you enable this you can disable on a per body basis via `Body.skipQuadTree`. */
+    public var skipQuadTree:Bool = false;
 
     /** If `true` the `Body.preUpdate` method will be skipped, halting all motion for all bodies. Note that other methods such as `collide` will still work, so be careful not to call them on paused bodies. */
     public var isPaused:Bool = false;
 
-    /** The world QuadTree. */
-    public var quadTree:QuadTree = null;
+    /** The world QuadTree objects. */
+    var quadTrees:Array<QuadTree> = null;
+
+    /** A shared internal pool used by every QuadTree. */
+    var quadTreePool:QuadTreePool = null;
+
+    /** When colliding/overlapping with groups. Use a quad tree if we reach this threshold value */
+    public var maxObjectsWithoutQuadTree:Int = 10;
 
     /**
     * @property {number} tileBias - A value added to the delta values during collision with tiles. Adjust this if you get tunneling.
@@ -85,7 +93,51 @@ class World {
         this.boundsWidth = boundsWidth;
         this.boundsHeight = boundsHeight;
 
-        this.quadTree = new QuadTree(this.boundsX, this.boundsY, this.boundsWidth, this.boundsHeight, this.maxObjects, this.maxLevels);
+    }
+
+    /**
+     * Get a QuadTree object configured for this world.
+     * IMPORTANT: you must release it with `releaseQuadTree()`
+     * when you are done using it and the items it returned.
+     * @return QuadTree
+     */
+    public function getQuadTree():QuadTree {
+
+        // Init internal data if needed
+        if (quadTrees == null) {
+            quadTrees = [];
+            quadTreePool = new QuadTreePool();
+        }
+
+        // Look for a non-busy quad tree
+        var quadTree:QuadTree = null;
+        for (i in 0...quadTrees.length) {
+            var candidate = quadTrees.unsafeGet(i);
+            if (!candidate.busy) {
+                quadTree = candidate;
+                break;
+            }
+        }
+
+        // If nothing found, create a new quad tree
+        if (quadTree == null) {
+            quadTree = new QuadTree(quadTreePool, boundsX, boundsY, boundsWidth, boundsHeight, maxObjects, maxLevels);
+            quadTrees.push(quadTree);
+        }
+        // If something found, reset the quad tree and use it
+        else {
+            quadTree.clear();
+            quadTree.reset(boundsX, boundsY, boundsWidth, boundsHeight, maxObjects, maxLevels);
+        }
+
+        quadTree.busy = true;
+        return quadTree;
+
+    }
+
+    inline public function releaseQuadTree(quadTree:QuadTree) {
+
+        quadTree.busy = false;
 
     }
 
@@ -358,6 +410,14 @@ class World {
         _total = 0;
 
         var objects = group.objects;
+
+        var quadTree:QuadTree = null;
+        if (!skipQuadTree && objects.length > maxObjectsWithoutQuadTree) {
+            quadTree = getQuadTree();
+            quadTree.populate(objects);
+            objects = quadTree.retrieve(body.left, body.top, body.right, body.bottom);
+        }
+
         for (i in 0...objects.length) {
             var body2 = objects[i];
 
@@ -373,6 +433,9 @@ class World {
                 }
             }
         }
+
+        if (quadTree != null)
+            releaseQuadTree(quadTree);
 
         return (_total > 0);
 
@@ -515,6 +578,14 @@ class World {
         _total = 0;
 
         var objects = group.objects;
+
+        var quadTree:QuadTree = null;
+        if (!skipQuadTree && objects.length > maxObjectsWithoutQuadTree) {
+            quadTree = getQuadTree();
+            quadTree.populate(objects);
+            objects = quadTree.retrieve(body.left, body.top, body.right, body.bottom);
+        }
+
         for (i in 0...objects.length) {
             var body2 = objects[i];
 
@@ -530,6 +601,9 @@ class World {
                 }
             }
         }
+
+        if (quadTree != null)
+            releaseQuadTree(quadTree);
 
         return (_total > 0);
 
@@ -1273,9 +1347,7 @@ class World {
      */
     public function getObjectsAtLocation<T>(x:Float, y:Float, group:Group, ?callback:T->Body->Void, ?callbackArg:T, ?output:Array<Body>):Array<Body>
     {
-
-        quadTree.clear();
-        quadTree.reset(boundsX, boundsY, boundsWidth, boundsHeight, maxObjects, maxLevels);
+        var quadTree = getQuadTree();
         quadTree.populate(group);
 
         if (output == null)
@@ -1300,6 +1372,8 @@ class World {
                 output.push(item);
             }
         }
+
+        releaseQuadTree(quadTree);
 
         return output;
 

@@ -26,6 +26,11 @@ using arcade.Extensions;
 */
 class QuadTree
 {
+    /**
+     * A flag used to know if this quad tree is currently
+     * busy and should not be used by something else.
+     */
+    public var busy:Bool = false;
 
     /**
     * @property {number} maxObjects - The maximum number of objects per node.
@@ -127,15 +132,21 @@ class QuadTree
     }
 
     /**
-    * Populates this quadtree with the children of the given Group. In order to be added the child must exist and have a body property.
-    *
-    * @method Phaser.QuadTree#populate
-    * @param {Phaser.Group} group - The Group to add to the quadtree.
-    */
-    public function populate(group:Group):Void
-    {
+     * Populates this quadtree with the children of the given Group. In order to be added the child must exist and have a body property.
+     *
+     * @method Phaser.QuadTree#populate
+     * @param {Phaser.Group} group - The Group to add to the quadtree.
+     */
+    public extern inline overload function populate(group:Group):Void {
+        _populate(group.objects);
+    }
 
-        var objects = group.objects;
+    public extern inline overload function populate(objects:Array<Body>):Void {
+        _populate(objects);
+    }
+
+    function _populate(objects:Array<Body>) {
+
         for (i in 0...objects.length) {
             insert(objects.unsafeGet(i));
         }
