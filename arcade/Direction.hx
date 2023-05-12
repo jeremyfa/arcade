@@ -12,4 +12,17 @@ package arcade;
 
     var DOWN:Int = 4;
 
+    public function toString() {
+
+        final value:Direction = abstract;
+        return 'Direction.' + switch value {
+            case NONE: 'NONE';
+            case LEFT: 'LEFT';
+            case RIGHT: 'RIGHT';
+            case UP: 'UP';
+            case DOWN: 'DOWN';
+        }
+
+    }
+
 } //Direction
