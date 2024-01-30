@@ -1,6 +1,6 @@
 package arcade;
 
-@:enum abstract Direction(Int) from Int to Int {
+enum abstract Direction(Int) from Int to Int {
 
     var NONE:Int = 0;
 

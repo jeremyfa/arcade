@@ -1,6 +1,6 @@
 package arcade;
 
-@:enum abstract SortDirection(Int) from Int to Int {
+enum abstract SortDirection(Int) from Int to Int {
 
     /** Inherit from parent */
     var INHERIT:Int = -1;
