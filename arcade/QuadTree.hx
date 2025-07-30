@@ -3,27 +3,10 @@ package arcade;
 using arcade.Extensions;
 
 /**
- * @author       Timo Hausmann
- * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2016 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * A QuadTree implementation. The original code was a conversion of the Java code posted to GameDevTuts.
+ * However I've tweaked it massively to add node indexing, removed lots of temp. var creation and significantly increased performance as a result.
+ * Original version at https://github.com/timohausmann/quadtree-js/
  */
-
-/**
-* A QuadTree implementation. The original code was a conversion of the Java code posted to GameDevTuts.
-* However I've tweaked it massively to add node indexing, removed lots of temp. var creation and significantly increased performance as a result.
-* Original version at https://github.com/timohausmann/quadtree-js/
-*
-* @class Phaser.QuadTree
-* @constructor
-* @param {number} x - The top left coordinate of the quadtree.
-* @param {number} y - The top left coordinate of the quadtree.
-* @param {number} width - The width of the quadtree in pixels.
-* @param {number} height - The height of the quadtree in pixels.
-* @param {number} [maxObjects=10] - The maximum number of objects per node.
-* @param {number} [maxLevels=4] - The maximum number of levels to iterate to.
-* @param {number} [level=0] - Which level is this?
-*/
 class QuadTree
 {
     /**
@@ -32,47 +15,39 @@ class QuadTree
      */
     public var busy:Bool = false;
 
-    /**
-    * @property {number} maxObjects - The maximum number of objects per node.
-    * @default
-    */
+    /** The maximum number of objects per node. */
     public var maxObjects:Int = 10;
 
-    /**
-    * @property {number} maxLevels - The maximum number of levels to break down to.
-    * @default
-    */
+    /** The maximum number of levels to break down to. */
     public var maxLevels:Int = 4;
 
-    /**
-    * @property {number} level - The current level.
-    */
+    /** The current level. */
     public var level:Int = 0;
 
-    // @property {object} bounds - Object that contains the quadtree bounds.
+    /** The x position of the quadtree bounds. */
     public var boundsX:Float = 0;
+    /** The y position of the quadtree bounds. */
     public var boundsY:Float = 0;
+    /** The width of the quadtree bounds. */
     public var boundsWidth:Float = 0;
+    /** The height of the quadtree bounds. */
     public var boundsHeight:Float = 0;
+    /** The sub-width of the quadtree bounds. */
     public var boundsSubWidth:Float = 0;
+    /** The sub-height of the quadtree bounds. */
     public var boundsSubHeight:Float = 0;
+    /** The right edge of the quadtree bounds. */
     public var boundsRight:Float = 0;
+    /** The bottom edge of the quadtree bounds. */
     public var boundsBottom:Float = 0;
 
-    /**
-    * @property {array} objects - Array of quadtree children.
-    */
+    /** Array of quadtree children. */
     public var objects:Array<Body> = [];
 
-    /**
-    * @property {array} nodes - Array of associated child nodes.
-    */
+    /** Array of associated child nodes. */
     public var nodes:Array<QuadTree> = [];
 
-    /**
-    * @property {array} _empty - Internal empty array.
-    * @private
-    */
+    /** Internal empty array. */
     private var _empty:Array<Body> = [];
 
     private var _pool:QuadTreePool = null;
@@ -92,17 +67,16 @@ class QuadTree
     }
 
     /**
-    * Resets the QuadTree.
-    *
-    * @method Phaser.QuadTree#reset
-    * @param {number} x - The top left coordinate of the quadtree.
-    * @param {number} y - The top left coordinate of the quadtree.
-    * @param {number} width - The width of the quadtree in pixels.
-    * @param {number} height - The height of the quadtree in pixels.
-    * @param {number} [maxObjects=10] - The maximum number of objects per node.
-    * @param {number} [maxLevels=4] - The maximum number of levels to iterate to.
-    * @param {number} [level=0] - Which level is this?
-    */
+     * Resets the QuadTree.
+     *
+     * @param x The top left coordinate of the quadtree.
+     * @param y The top left coordinate of the quadtree.
+     * @param width The width of the quadtree in pixels.
+     * @param height The height of the quadtree in pixels.
+     * @param maxObjects The maximum number of objects per node.
+     * @param maxLevels The maximum number of levels to iterate to.
+     * @param level Which level is this?
+     */
     public function reset(x:Float, y:Float, width:Float, height:Float, maxObjects:Int = 10, maxLevels:Int = 4, level:Int = 0)
     {
         this.maxObjects = maxObjects;
@@ -134,8 +108,7 @@ class QuadTree
     /**
      * Populates this quadtree with the children of the given Group. In order to be added the child must exist and have a body property.
      *
-     * @method Phaser.QuadTree#populate
-     * @param {Phaser.Group} group - The Group to add to the quadtree.
+     * @param group The Group to add to the quadtree.
      */
     public extern inline overload function populate(group:Group):Void {
         _populate(group.objects);
@@ -154,10 +127,8 @@ class QuadTree
     }
 
     /**
-    * Split the node into 4 subnodes
-    *
-    * @method Phaser.QuadTree#split
-    */
+     * Split the node into 4 subnodes
+     */
     public function split():Void
     {
 
@@ -176,11 +147,10 @@ class QuadTree
     }
 
     /**
-    * Insert the object into the node. If the node exceeds the capacity, it will split and add all objects to their corresponding subnodes.
-    *
-    * @method Phaser.QuadTree#insert
-    * @param {Phaser.Physics.Arcade.Body|object} body - The Body object to insert into the quadtree. Can be any object so long as it exposes x, y, right and bottom properties.
-    */
+     * Insert the object into the node. If the node exceeds the capacity, it will split and add all objects to their corresponding subnodes.
+     *
+     * @param body The Body object to insert into the quadtree.
+     */
     public function insert(body:Body):Void
     {
         var i:Int = 0;
@@ -230,12 +200,14 @@ class QuadTree
     }
 
     /**
-    * Determine which node the object belongs to.
-    *
-    * @method Phaser.QuadTree#getIndex
-    * @param {Phaser.Rectangle|object} rect - The bounds in which to check.
-    * @return {number} index - Index of the subnode (0-3), or -1 if rect cannot completely fit within a subnode and is part of the parent node.
-    */
+     * Determine which node the object belongs to.
+     *
+     * @param left The left edge of the bounds to check.
+     * @param top The top edge of the bounds to check.
+     * @param right The right edge of the bounds to check.
+     * @param bottom The bottom edge of the bounds to check.
+     * @return Index of the subnode (0-3), or -1 if rect cannot completely fit within a subnode and is part of the parent node.
+     */
     public function getIndex(left:Float, top:Float, right:Float, bottom:Float):Int
     {
 
@@ -287,12 +259,14 @@ class QuadTree
     }
 
     /**
-    * Return all objects that could collide with the given Sprite or Rectangle.
-    *
-    * @method Phaser.QuadTree#retrieve
-    * @param {Phaser.Sprite|Phaser.Rectangle} source - The source object to check the QuadTree against. Either a Sprite or Rectangle.
-    * @return {array} - Array with all detected objects.
-    */
+     * Return all objects that could collide with the given bounds.
+     *
+     * @param left The left edge of the bounds to check.
+     * @param top The top edge of the bounds to check.
+     * @param right The right edge of the bounds to check.
+     * @param bottom The bottom edge of the bounds to check.
+     * @return Array with all detected objects.
+     */
     public function retrieve(left:Float, top:Float, right:Float, bottom:Float):Array<Body>
     {
 
@@ -327,9 +301,8 @@ class QuadTree
     }
 
     /**
-    * Clear the quadtree.
-    * @method Phaser.QuadTree#clear
-    */
+     * Clear the quadtree.
+     */
     public function clear()
     {
         for (i in 0...nodes.length) {
@@ -348,6 +321,9 @@ class QuadTree
 
 }
 
+/**
+ * Object pool for QuadTree instances to reduce garbage collection overhead.
+ */
 class QuadTreePool {
 
     public function new() {
@@ -417,37 +393,31 @@ class QuadTreePool {
 }
 
 /**
-* Javascript QuadTree
-* @version 1.0
-*
-* @version 1.3, March 11th 2014
-* @author Richard Davey
-* The original code was a conversion of the Java code posted to GameDevTuts. However I've tweaked
-* it massively to add node indexing, removed lots of temp. var creation and significantly
-* increased performance as a result.
-*
-* Original version at https://github.com/timohausmann/quadtree-js/
-*/
-
-/**
-* @copyright © 2012 Timo Hausmann
-*
-* Permission is hereby granted, free of charge, to any person obtaining
-* a copy of this software and associated documentation files (the
-* "Software"), to deal in the Software without restriction, including
-* without limitation the rights to use, copy, modify, merge, publish,
-* distribute, sublicense, and/or sell copies of the Software, and to
-* permit persons to whom the Software is furnished to do so, subject to
-* the following conditions:
-*
-* The above copyright notice and this permission notice shall be
-* included in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-* LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-* WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ * Javascript QuadTree
+ * The original code was a conversion of the Java code posted to GameDevTuts. However I've tweaked
+ * it massively to add node indexing, removed lots of temp. var creation and significantly
+ * increased performance as a result.
+ *
+ * Original version at https://github.com/timohausmann/quadtree-js/
+ *
+ * @copyright © 2012 Timo Hausmann
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */

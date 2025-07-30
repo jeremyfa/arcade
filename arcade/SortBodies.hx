@@ -23,13 +23,9 @@ package arcade;
  */
 
 /**
-    SortBodiesLeftRight provides a stable implementation of merge sort through its `sort`
-    method. It should be used instead of `Array.sort` in cases where the order
-    of equal elements has to be retained on all targets.
-    
-    This specific implementation has been modified to be exclusively used with array of `arcade.Body` instances.
-    The compare function (and the rest of the implementation) are inlined to get the best performance out of it.
-**/
+ * Provides a stable merge sort implementation for sorting Body arrays from left to right (by x coordinate).
+ * This implementation maintains the order of equal elements and is optimized specifically for arcade.Body instances.
+ */
 class SortBodiesLeftRight {
 
     static inline function cmp(a:Body, b:Body):Int {
@@ -39,16 +35,11 @@ class SortBodiesLeftRight {
     }
 
     /**
-        Sorts Array `a` according to the comparison function `cmp`, where
-        `cmp(x,y)` returns 0 if `x == y`, a positive Int if `x > y` and a
-        negative Int if `x < y`.
-
-        This operation modifies Array `a` in place.
-
-        This operation is stable: The order of equal elements is preserved.
-
-        If `a` or `cmp` are null, the result is unspecified.
-    **/
+     * Sorts the array of bodies from left to right based on their x position.
+     * This operation modifies the array in place and preserves the order of bodies with equal x positions.
+     *
+     * @param a The array of bodies to sort.
+     */
     static inline public function sort(a:Array<Body>) {
         rec(a, 0, a.length);
     }
@@ -169,13 +160,9 @@ class SortBodiesLeftRight {
 }
 
 /**
-    SortBodiesLeftRight provides a stable implementation of merge sort through its `sort`
-    method. It should be used instead of `Array.sort` in cases where the order
-    of equal elements has to be retained on all targets.
-    
-    This specific implementation has been modified to be exclusively used with array of `arcade.Body` instances.
-    The compare function (and the rest of the implementation) are inlined to get the best performance out of it.
-**/
+ * Provides a stable merge sort implementation for sorting Body arrays from right to left (by x coordinate).
+ * This implementation maintains the order of equal elements and is optimized specifically for arcade.Body instances.
+ */
 class SortBodiesRightLeft {
 
     static inline function cmp(a:Body, b:Body):Int {
@@ -185,16 +172,11 @@ class SortBodiesRightLeft {
     }
 
     /**
-        Sorts Array `a` according to the comparison function `cmp`, where
-        `cmp(x,y)` returns 0 if `x == y`, a positive Int if `x > y` and a
-        negative Int if `x < y`.
-
-        This operation modifies Array `a` in place.
-
-        This operation is stable: The order of equal elements is preserved.
-
-        If `a` or `cmp` are null, the result is unspecified.
-    **/
+     * Sorts the array of bodies from left to right based on their x position.
+     * This operation modifies the array in place and preserves the order of bodies with equal x positions.
+     *
+     * @param a The array of bodies to sort.
+     */
     static inline public function sort(a:Array<Body>) {
         rec(a, 0, a.length);
     }
@@ -315,13 +297,9 @@ class SortBodiesRightLeft {
 }
 
 /**
-    SortBodiesTopBottom provides a stable implementation of merge sort through its `sort`
-    method. It should be used instead of `Array.sort` in cases where the order
-    of equal elements has to be retained on all targets.
-    
-    This specific implementation has been modified to be exclusively used with array of `arcade.Body` instances.
-    The compare function (and the rest of the implementation) are inlined to get the best performance out of it.
-**/
+ * Provides a stable merge sort implementation for sorting Body arrays from top to bottom (by y coordinate).
+ * This implementation maintains the order of equal elements and is optimized specifically for arcade.Body instances.
+ */
 class SortBodiesTopBottom {
 
     static inline function cmp(a:Body, b:Body):Int {
@@ -331,16 +309,11 @@ class SortBodiesTopBottom {
     }
 
     /**
-        Sorts Array `a` according to the comparison function `cmp`, where
-        `cmp(x,y)` returns 0 if `x == y`, a positive Int if `x > y` and a
-        negative Int if `x < y`.
-
-        This operation modifies Array `a` in place.
-
-        This operation is stable: The order of equal elements is preserved.
-
-        If `a` or `cmp` are null, the result is unspecified.
-    **/
+     * Sorts the array of bodies from left to right based on their x position.
+     * This operation modifies the array in place and preserves the order of bodies with equal x positions.
+     *
+     * @param a The array of bodies to sort.
+     */
     static inline public function sort(a:Array<Body>) {
         rec(a, 0, a.length);
     }
@@ -461,13 +434,9 @@ class SortBodiesTopBottom {
 }
 
 /**
-    SortBodiesBottomTop provides a stable implementation of merge sort through its `sort`
-    method. It should be used instead of `Array.sort` in cases where the order
-    of equal elements has to be retained on all targets.
-    
-    This specific implementation has been modified to be exclusively used with array of `arcade.Body` instances.
-    The compare function (and the rest of the implementation) are inlined to get the best performance out of it.
-**/
+ * Provides a stable merge sort implementation for sorting Body arrays from bottom to top (by y coordinate).
+ * This implementation maintains the order of equal elements and is optimized specifically for arcade.Body instances.
+ */
 class SortBodiesBottomTop {
 
     static inline function cmp(a:Body, b:Body):Int {
@@ -477,16 +446,11 @@ class SortBodiesBottomTop {
     }
 
     /**
-        Sorts Array `a` according to the comparison function `cmp`, where
-        `cmp(x,y)` returns 0 if `x == y`, a positive Int if `x > y` and a
-        negative Int if `x < y`.
-
-        This operation modifies Array `a` in place.
-
-        This operation is stable: The order of equal elements is preserved.
-
-        If `a` or `cmp` are null, the result is unspecified.
-    **/
+     * Sorts the array of bodies from left to right based on their x position.
+     * This operation modifies the array in place and preserves the order of bodies with equal x positions.
+     *
+     * @param a The array of bodies to sort.
+     */
     static inline public function sort(a:Array<Body>) {
         rec(a, 0, a.length);
     }

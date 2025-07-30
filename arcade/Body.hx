@@ -1,19 +1,9 @@
 package arcade;
 
 /**
-* @author       Richard Davey <rich@photonstorm.com>
-* @copyright    2016 Photon Storm Ltd.
-* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
-*/
-
-/**
-* The Physics Body is linked to a single Sprite. All physics operations should be performed against the body rather than
-* the Sprite itself. For example you can set the velocity, acceleration, bounce values etc all on the Body.
-*
-* @class Phaser.Physics.Arcade.Body
-* @constructor
-* @param {Phaser.Sprite} sprite - The Sprite object this physics body belongs to.
-*/
+ * The Physics Body is linked to a single game object. All physics operations should be performed against the body rather than
+ * the object itself. For example you can set the velocity, acceleration, bounce values etc all on the Body.
+ */
 @:allow(arcade.World)
 class Body implements Collidable
 {
@@ -41,10 +31,7 @@ class Body implements Collidable
         return group;
     }
 
-    /**
-    * @property {boolean} enable - A disabled body won't be checked for any form of collision or overlap or have its pre/post updates run.
-    * @default
-    */
+    /** A disabled body won't be checked for any form of collision or overlap or have its pre/post updates run. */
     public var enable:Bool = true;
 
     /**
@@ -53,144 +40,120 @@ class Body implements Collidable
     public var forceX:Bool = false;
 
     /**
-    * If `true` this Body is using circular collision detection. If `false` it is using rectangular.
-    * Use `Body.setCircle` to control the collision shape this Body uses.
-    * @property {boolean} isCircle
-    * @default
-    * @readOnly
-    */
+     * If `true` this Body is using circular collision detection. If `false` it is using rectangular.
+     * Use `Body.setCircle` to control the collision shape this Body uses.
+     */
     public var isCircle:Bool = false;
 
     /**
-    * The radius of the circular collision shape this Body is using if Body.setCircle has been enabled, relative to the Sprite's _texture_.
-    * If you wish to change the radius then call {@link #setCircle} again with the new value.
-    * If you wish to stop the Body using a circle then call {@link #setCircle} with a radius of zero (or undefined).
-    * The actual radius of the Body (at any Sprite scale) is equal to {@link #halfWidth} and the diameter is equal to {@link #width}.
-    * @property {number} radius
-    * @default
-    * @readOnly
-    */
+     * The radius of the circular collision shape this Body is using if Body.setCircle has been enabled.
+     * If you wish to change the radius then call `setCircle` again with the new value.
+     * If you wish to stop the Body using a circle then call `setCircle` with a radius of zero (or undefined).
+     * The actual radius of the Body is equal to `halfWidth` and the diameter is equal to `width`.
+     */
     public var radius:Float = 0;
 
-    // @property {Phaser.Point} position - The position of the physics body, equivalent to ({@link #left}, {@link #top}).
+    /** The x position of the physics body. */
     public var x:Float = 0;
+    /** The y position of the physics body. */
     public var y:Float = 0;
 
-    // @property {Phaser.Point} prev - The previous position of the physics body.
+    /** The previous x position of the physics body. */
     public var prevX:Float = 0;
+    /** The previous y position of the physics body. */
     public var prevY:Float = 0;
 
-    /**
-    * @property {boolean} allowRotation - Allow this Body to be rotated? (via angularVelocity, etc)
-    * @default
-    */
+    /** Allow this Body to be rotated? (via angularVelocity, etc) */
     public var allowRotation:Bool = true;
 
     /**
-    * The Body's rotation in degrees, as calculated by its angularVelocity and angularAcceleration. Please understand that the collision Body
-    * itself never rotates, it is always axis-aligned. However these values are passed up to the parent Sprite and updates its rotation.
-    * @property {number} rotation
-    */
+     * The Body's rotation in degrees, as calculated by its angularVelocity and angularAcceleration. Please understand that the collision Body
+     * itself never rotates, it is always axis-aligned. However these values are passed up to the parent object and updates its rotation.
+     */
     public var rotation:Float = 0;
 
-    /**
-    * @property {number} preRotation - The previous rotation of the physics body, in degrees.
-    * @readonly
-    */
+    /** The previous rotation of the physics body, in degrees. */
     public var preRotation:Float = 0;
 
-    /**
-    * @property {number} width - The calculated width of the physics body.
-    * @readonly
-    */
+    /** The calculated width of the physics body. */
     public var width:Float = 0;
 
-    /**
-    * @property {number} height - The calculated height of the physics body.
-    * @readonly
-    */
+    /** The calculated height of the physics body. */
     public var height:Float = 0;
 
-    /**
-    * @property {number} halfWidth - The calculated width / 2 of the physics body.
-    * @readonly
-    */
+    /** The calculated width / 2 of the physics body. */
     public var halfWidth:Float = 0;
 
-    /**
-    * @property {number} halfHeight - The calculated height / 2 of the physics body.
-    * @readonly
-    */
+    /** The calculated height / 2 of the physics body. */
     public var halfHeight:Float = 0;
 
-    // @property {Phaser.Point} center - The center coordinate of the Physics Body.
+    /** The center x coordinate of the Physics Body. */
     public var centerX:Float = 0;
+    /** The center y coordinate of the Physics Body. */
     public var centerY:Float = 0;
 
-    // @property {Phaser.Point} velocity - The velocity, or rate of change the Body's position. Measured in pixels per second.
+    /** The x velocity, or rate of change of the Body's x position. Measured in pixels per second. */
     public var velocityX:Float = 0;
+    /** The y velocity, or rate of change of the Body's y position. Measured in pixels per second. */
     public var velocityY:Float = 0;
 
-    /**
-    * @property {Phaser.Point} newVelocity - The distanced traveled during the last update, equal to `velocity * physicsElapsed`. Calculated during the Body.preUpdate and applied to its position.
-    * @readonly
-    */
+    /** The x distance traveled during the last update, equal to `velocityX * physicsElapsed`. Calculated during the Body.preUpdate and applied to its position. */
     public var newVelocityX:Float = 0;
+    /** The y distance traveled during the last update, equal to `velocityY * physicsElapsed`. Calculated during the Body.preUpdate and applied to its position. */
     public var newVelocityY:Float = 0;
 
-    // @property {Phaser.Point} deltaMax - The Sprite position is updated based on the delta x/y values. You can set a cap on those (both +-) using deltaMax.
+    /** The maximum x delta value. The Body position is updated based on the delta x/y values. You can set a cap on those (both +-) using maxDeltaX. */
     public var maxDeltaX:Float = 0;
+    /** The maximum y delta value. The Body position is updated based on the delta x/y values. You can set a cap on those (both +-) using maxDeltaY. */
     public var maxDeltaY:Float = 0;
 
-    // @property {Phaser.Point} acceleration - The acceleration is the rate of change of the velocity. Measured in pixels per second squared.
+    /** The x acceleration is the rate of change of the x velocity. Measured in pixels per second squared. */
     public var accelerationX:Float = 0;
+    /** The y acceleration is the rate of change of the y velocity. Measured in pixels per second squared. */
     public var accelerationY:Float = 0;
 
-    /**
-     * @property {boolean} allowDrag - Allow this Body to be influenced by {@link #drag}?
-     * @default
-     */
+    /** Allow this Body to be influenced by drag? */
     public var allowDrag:Bool = true;
 
-    // @property {Phaser.Point} drag - The drag applied to the motion of the Body (when {@link #allowDrag} is enabled). Measured in pixels per second squared.
+    /** The x drag applied to the motion of the Body (when `allowDrag` is enabled). Measured in pixels per second squared. */
     public var dragX:Float = 0;
+    /** The y drag applied to the motion of the Body (when `allowDrag` is enabled). Measured in pixels per second squared. */
     public var dragY:Float = 0;
 
-    /**
-    * @property {boolean} allowGravity - Allow this Body to be influenced by gravity? Either world or local.
-    * @default
-    */
+    /** Allow this Body to be influenced by gravity? Either world or local. */
     public var allowGravity:Bool = true;
 
-    // @property {Phaser.Point} gravity - This Body's local gravity, **added** to any world gravity, unless Body.allowGravity is set to false.
+    /** This Body's local x gravity, **added** to any world x gravity, unless Body.allowGravity is set to false. */
     public var gravityX:Float = 0;
+    /** This Body's local y gravity, **added** to any world y gravity, unless Body.allowGravity is set to false. */
     public var gravityY:Float = 0;
 
-    // @property {Phaser.Point} bounce - The elasticity of the Body when colliding. bounce.x/y = 1 means full rebound, bounce.x/y = 0.5 means 50% rebound velocity.
+    /** The x elasticity of the Body when colliding. bounceX = 1 means full rebound, bounceX = 0.5 means 50% rebound velocity. */
     public var bounceX:Float = 0;
+    /** The y elasticity of the Body when colliding. bounceY = 1 means full rebound, bounceY = 0.5 means 50% rebound velocity. */
     public var bounceY:Float = 0;
 
     /**
-    * The elasticity of the Body when colliding with the World bounds.
-    * By default this property is `null`, in which case `Body.bounce` is used instead. Set this property
-    * to a Phaser.Point object in order to enable a World bounds specific bounce value.
-    * @property {Phaser.Point} useWorldBounce
-    */
+     * The elasticity of the Body when colliding with the World bounds.
+     * By default this property is `false`, in which case `Body.bounce` is used instead. Set this property
+     * to true in order to enable a World bounds specific bounce value.
+     */
     public var useWorldBounce:Bool = false;
+    /** The x elasticity of the Body when colliding with the World bounds. */
     public var worldBounceX:Float = 0;
+    /** The y elasticity of the Body when colliding with the World bounds. */
     public var worldBounceY:Float = 0;
 
 
     /**
-    * A Signal that is dispatched when this Body collides with the world bounds.
-    * Due to the potentially high volume of signals this could create it is disabled by default.
-    * To use this feature set this property to a Phaser.Signal: `sprite.body.onWorldBounds = new Phaser.Signal()`
-    * and it will be called when a collision happens, passing five arguments:
-    * `onWorldBounds(sprite, up, down, left, right)`
-    * where the Sprite is a reference to the Sprite that owns this Body, and the other arguments are booleans
-    * indicating on which side of the world the Body collided.
-    * @property {Phaser.Signal} onWorldBounds
-    */
+     * A callback that is dispatched when this Body collides with the world bounds.
+     * Due to the potentially high volume of signals this could create it is disabled by default.
+     * To use this feature set this property to a function
+     * and it will be called when a collision happens, passing five arguments:
+     * `onWorldBounds(body, up, down, left, right)`
+     * where the Body is a reference to this Body, and the other arguments are booleans
+     * indicating on which side of the world the Body collided.
+     */
     public var onWorldBounds:Body->Bool->Bool->Bool->Bool->Void = null;
     @:noCompletion inline public function emitWorldBounds(body:Body, up:Bool, down:Bool, left:Bool, right:Bool):Void {
         if (onWorldBounds != null) {
@@ -199,23 +162,22 @@ class Body implements Collidable
     }
 
     /**
-    * A Signal that is dispatched when this Body collides with another Body.
-    *
-    * You still need to call `game.physics.arcade.collide` in your `update` method in order
-    * for this signal to be dispatched.
-    *
-    * Usually you'd pass a callback to the `collide` method, but this signal provides for
-    * a different level of notification.
-    *
-    * Due to the potentially high volume of signals this could create it is disabled by default.
-    *
-    * To use this feature set this property to a Phaser.Signal: `sprite.body.onCollide = new Phaser.Signal()`
-    * and it will be called when a collision happens, passing two arguments: the sprites which collided.
-    * The first sprite in the argument is always the owner of this Body.
-    *
-    * If two Bodies with this Signal set collide, both will dispatch the Signal.
-    * @property {Phaser.Signal} onCollide
-    */
+     * A callback that is dispatched when this Body collides with another Body.
+     *
+     * You still need to call `world.collide` in your update method in order
+     * for this callback to be dispatched.
+     *
+     * Usually you'd pass a callback to the `collide` method, but this callback provides for
+     * a different level of notification.
+     *
+     * Due to the potentially high volume of callbacks this could create it is disabled by default.
+     *
+     * To use this feature set this property to a function
+     * and it will be called when a collision happens, passing two arguments: the bodies which collided.
+     * The first body in the argument is always this Body.
+     *
+     * If two Bodies with this callback set collide, both will dispatch the callback.
+     */
     public var onCollide:Body->Body->Void = null;
     @:noCompletion inline public function emitCollide(body1:Body, body2:Body):Void {
         if (onCollide != null) {
@@ -224,23 +186,22 @@ class Body implements Collidable
     }
 
     /**
-    * A Signal that is dispatched when this Body overlaps with another Body.
-    *
-    * You still need to call `game.physics.arcade.overlap` in your `update` method in order
-    * for this signal to be dispatched.
-    *
-    * Usually you'd pass a callback to the `overlap` method, but this signal provides for
-    * a different level of notification.
-    *
-    * Due to the potentially high volume of signals this could create it is disabled by default.
-    *
-    * To use this feature set this property to a Phaser.Signal: `sprite.body.onOverlap = new Phaser.Signal()`
-    * and it will be called when a collision happens, passing two arguments: the sprites which collided.
-    * The first sprite in the argument is always the owner of this Body.
-    *
-    * If two Bodies with this Signal set collide, both will dispatch the Signal.
-    * @property {Phaser.Signal} onOverlap
-    */
+     * A callback that is dispatched when this Body overlaps with another Body.
+     *
+     * You still need to call `world.overlap` in your update method in order
+     * for this callback to be dispatched.
+     *
+     * Usually you'd pass a callback to the `overlap` method, but this callback provides for
+     * a different level of notification.
+     *
+     * Due to the potentially high volume of callbacks this could create it is disabled by default.
+     *
+     * To use this feature set this property to a function
+     * and it will be called when an overlap happens, passing two arguments: the bodies which overlapped.
+     * The first body in the argument is always this Body.
+     *
+     * If two Bodies with this callback set overlap, both will dispatch the callback.
+     */
     public var onOverlap:Body->Body->Void = null;
     @:noCompletion inline public function emitOverlap(body1:Body, body2:Body):Void {
         if (onOverlap != null) {
@@ -248,231 +209,154 @@ class Body implements Collidable
         }
     }
 
-    // @property {Phaser.Point} maxVelocity - The maximum velocity (in pixels per second squared) that the Body can reach.
+    /** The maximum x velocity (in pixels per second) that the Body can reach. */
     public var maxVelocityX:Float = 10000;
+    /** The maximum y velocity (in pixels per second) that the Body can reach. */
     public var maxVelocityY:Float = 10000;
 
-    // @property {Phaser.Point} friction - If this Body is {@link #immovable} and moving, and another Body is 'riding' this one, this is the amount of motion the riding Body receives on each axis.
+    /** If this Body is `immovable` and moving, and another Body is 'riding' this one, this is the amount of x motion the riding Body receives. */
     public var frictionX:Float = 1;
+    /** If this Body is `immovable` and moving, and another Body is 'riding' this one, this is the amount of y motion the riding Body receives. */
     public var frictionY:Float = 0;
 
-    /**
-    * @property {number} angularVelocity - The angular velocity is the rate of change of the Body's rotation. It is measured in degrees per second.
-    * @default
-    */
+    /** The angular velocity is the rate of change of the Body's rotation. It is measured in degrees per second. */
     public var angularVelocity:Float = 0;
 
-    /**
-    * @property {number} angularAcceleration - The angular acceleration is the rate of change of the angular velocity. Measured in degrees per second squared.
-    * @default
-    */
+    /** The angular acceleration is the rate of change of the angular velocity. Measured in degrees per second squared. */
     public var angularAcceleration:Float = 0;
 
-    /**
-    * @property {number} angularDrag - The drag applied during the rotation of the Body. Measured in degrees per second squared.
-    * @default
-    */
+    /** The drag applied during the rotation of the Body. Measured in degrees per second squared. */
     public var angularDrag:Float = 0;
 
-    /**
-    * @property {number} maxAngularVelocity - The maximum angular velocity in degrees per second that the Body can reach.
-    * @default
-    */
+    /** The maximum angular velocity in degrees per second that the Body can reach. */
     public var maxAngularVelocity:Float = 1000;
 
-    /**
-    * @property {number} mass - The mass of the Body. When two bodies collide their mass is used in the calculation to determine the exchange of velocity.
-    * @default
-    */
+    /** The mass of the Body. When two bodies collide their mass is used in the calculation to determine the exchange of velocity. */
     public var mass:Float = 1;
 
-    /**
-    * @property {number} angle - The angle of the Body's **velocity** in radians.
-    * @readonly
-    */
+    /** The angle of the Body's **velocity** in radians. */
     public var angle:Float = 0;
 
-    /**
-    * @property {number} speed - The speed of the Body in pixels per second, equal to the magnitude of the velocity.
-    * @readonly
-    */
+    /** The speed of the Body in pixels per second, equal to the magnitude of the velocity. */
     public var speed:Float = 0;
 
-    /**
-    * @property {number} facing - A const reference to the direction the Body is traveling or facing: Phaser.NONE, Phaser.LEFT, Phaser.RIGHT, Phaser.UP, or Phaser.DOWN. If the Body is moving on both axes, UP and DOWN take precedence.
-    * @default
-    */
+    /** A const reference to the direction the Body is traveling or facing: NONE, LEFT, RIGHT, UP, or DOWN. If the Body is moving on both axes, UP and DOWN take precedence. */
     public var facing:Direction = Direction.NONE;
 
-    /**
-    * @property {boolean} immovable - An immovable Body will not receive any impacts from other bodies. **Two** immovable Bodies can't separate or exchange momentum and will pass through each other.
-    * @default
-    */
+    /** An immovable Body will not receive any impacts from other bodies. **Two** immovable Bodies can't separate or exchange momentum and will pass through each other. */
     public var immovable:Bool = false;
 
     /**
-    * Whether the physics system should update the Body's position and rotation based on its velocity, acceleration, drag, and gravity.
-    *
-    * If you have a Body that is being moved around the world via a tween or a Group motion, but its local x/y position never
-    * actually changes, then you should set Body.moves = false. Otherwise it will most likely fly off the screen.
-    * If you want the physics system to move the body around, then set moves to true.
-    *
-    * A Body with moves = false can still be moved slightly (but not accelerated) during collision separation unless you set {@link #immovable} as well.
-    *
-    * @property {boolean} moves - Set to true to allow the Physics system to move this Body, otherwise false to move it manually.
-    * @default
-    */
+     * Whether the physics system should update the Body's position and rotation based on its velocity, acceleration, drag, and gravity.
+     *
+     * If you have a Body that is being moved around the world via a tween or a Group motion, but its local x/y position never
+     * actually changes, then you should set Body.moves = false. Otherwise it will most likely fly off the screen.
+     * If you want the physics system to move the body around, then set moves to true.
+     *
+     * A Body with moves = false can still be moved slightly (but not accelerated) during collision separation unless you set `immovable` as well.
+     */
     public var moves:Bool = true;
 
     /**
-    * This flag allows you to disable the custom x separation that takes place by Physics.Arcade.separate.
-    * Used in combination with your own collision processHandler you can create whatever type of collision response you need.
-    * @property {boolean} customSeparateX - Use a custom separation system or the built-in one?
-    * @default
-    */
+     * This flag allows you to disable the custom x separation that takes place by World.separate.
+     * Used in combination with your own collision processHandler you can create whatever type of collision response you need.
+     */
     public var customSeparateX:Bool = false;
 
     /**
-    * This flag allows you to disable the custom y separation that takes place by Physics.Arcade.separate.
-    * Used in combination with your own collision processHandler you can create whatever type of collision response you need.
-    * @property {boolean} customSeparateY - Use a custom separation system or the built-in one?
-    * @default
-    */
+     * This flag allows you to disable the custom y separation that takes place by World.separate.
+     * Used in combination with your own collision processHandler you can create whatever type of collision response you need.
+     */
     public var customSeparateY:Bool = false;
 
-    /**
-    * When this body collides with another, the amount of overlap is stored here.
-    * @property {number} overlapX - The amount of horizontal overlap during the collision.
-    */
+    /** When this body collides with another, the amount of horizontal overlap is stored here. */
     public var overlapX:Float = 0;
 
-    /**
-    * When this body collides with another, the amount of overlap is stored here.
-    * @property {number} overlapY - The amount of vertical overlap during the collision.
-    */
+    /** When this body collides with another, the amount of vertical overlap is stored here. */
     public var overlapY:Float = 0;
 
-    /**
-    * If `Body.isCircle` is true, and this body collides with another circular body, the amount of overlap is stored here.
-    * @property {number} overlapR - The amount of overlap during the collision.
-    */
+    /** If `Body.isCircle` is true, and this body collides with another circular body, the amount of overlap is stored here. */
     public var overlapR:Float = 0;
 
-    /**
-    * If a body is overlapping with another body, but neither of them are moving (maybe they spawned on-top of each other?) this is set to true.
-    * @property {boolean} embedded - Body embed value.
-    */
+    /** If a body is overlapping with another body, but neither of them are moving (maybe they spawned on-top of each other?) this is set to true. */
     public var embedded:Bool = false;
 
-    /**
-    * A Body can be set to collide against the World bounds automatically and rebound back into the World if this is set to true. Otherwise it will leave the World.
-    * @property {boolean} collideWorldBounds - Should the Body collide with the World bounds?
-    */
+    /** A Body can be set to collide against the World bounds automatically and rebound back into the World if this is set to true. Otherwise it will leave the World. */
     public var collideWorldBounds:Bool = false;
 
-    // Set the checkCollision properties to control which directions collision is processed for this Body.
-    // For example checkCollision.up = false means it won't collide when the collision happened while moving up.
-    // If you need to disable a Body entirely, use `body.enable = false`, this will also disable motion.
-    // If you need to disable just collision and/or overlap checks, but retain motion, set `checkCollision.none = true`.
-    // @property {object} checkCollision - An object containing allowed collision (none, up, down, left, right).
+    /** If true, collision and overlap checks are disabled for this Body, but motion is retained. */
     public var checkCollisionNone:Bool = false;
+    /** Whether this body processes collisions on its top edge. */
     public var checkCollisionUp:Bool = true;
+    /** Whether this body processes collisions on its bottom edge. */
     public var checkCollisionDown:Bool = true;
+    /** Whether this body processes collisions on its left edge. */
     public var checkCollisionLeft:Bool = true;
+    /** Whether this body processes collisions on its right edge. */
     public var checkCollisionRight:Bool = true;
 
 
-    // This object is populated with boolean values when the Body collides with another.
-    // touching.up = true means the collision happened to the top of this Body for example.
-    // @property {object} touching - An object containing touching results (none, up, down, left, right).
+    /** True if the Body is not touching any other Body. */
     public var touchingNone:Bool = true;
+    /** True if the Body is touching another Body on its top edge. */
     public var touchingUp:Bool = false;
+    /** True if the Body is touching another Body on its bottom edge. */
     public var touchingDown:Bool = false;
+    /** True if the Body is touching another Body on its left edge. */
     public var touchingLeft:Bool = false;
+    /** True if the Body is touching another Body on its right edge. */
     public var touchingRight:Bool = false;
 
-    // This object is populated with previous touching values from the bodies previous collision.
-    // @property {object} wasTouching - An object containing previous touching results (none, up, down, left, right).
+    /** True if the Body was not touching any other Body in the previous collision check. */
     public var wasTouchingNone:Bool = true;
+    /** True if the Body was touching another Body on its top edge in the previous collision check. */
     public var wasTouchingUp:Bool = false;
+    /** True if the Body was touching another Body on its bottom edge in the previous collision check. */
     public var wasTouchingDown:Bool = false;
+    /** True if the Body was touching another Body on its left edge in the previous collision check. */
     public var wasTouchingLeft:Bool = false;
+    /** True if the Body was touching another Body on its right edge in the previous collision check. */
     public var wasTouchingRight:Bool = false;
 
-    /**
-    * @property {boolean} blockedNone - If this Body being blocked by world bounds or another immovable object?
-    */
+    /** If this Body being blocked by world bounds or another immovable object? */
     public var blockedNone:Bool = true;
-    /**
-    * @property {boolean} blockedNone - If this Body being blocked by upper world bounds or another immovable object above it?
-    */
+    /** If this Body being blocked by upper world bounds or another immovable object above it? */
     public var blockedUp:Bool = false;
-    /**
-    * @property {boolean} blockedNone - If this Body being blocked by lower world bounds or another immovable object below it?
-    */
+    /** If this Body being blocked by lower world bounds or another immovable object below it? */
     public var blockedDown:Bool = false;
-    /**
-    * @property {boolean} blockedNone - If this Body being blocked by left world bounds or another immovable object on the left?
-    */
+    /** If this Body being blocked by left world bounds or another immovable object on the left? */
     public var blockedLeft:Bool = false;
-    /**
-    * @property {boolean} blockedNone - If this Body being blocked by right world bounds or another immovable object on the right?
-    */
+    /** If this Body being blocked by right world bounds or another immovable object on the right? */
     public var blockedRight:Bool = false;
 
-    /**
-    * @property {boolean} dirty - If this Body in a preUpdate (true) or postUpdate (false) state?
-    */
+    /** If this Body in a preUpdate (true) or postUpdate (false) state? */
     public var dirty:Bool = false;
 
-    /**
-    * @property {boolean} skipQuadTree - If true and you collide this Sprite against a Group, it will disable the collision check from using a QuadTree.
-    */
+    /** If true and you collide this Body against a Group, it will disable the collision check from using a QuadTree. */
     public var skipQuadTree:Bool = false;
 
-    /**
-    * @property {boolean} isMoving - Set by the `moveTo` and `moveFrom` methods.
-    */
+    /** Set by the `moveTo` and `moveFrom` methods. */
     public var isMoving:Bool = false;
 
-    /**
-    * @property {boolean} stopVelocityOnCollide - Set by the `moveTo` and `moveFrom` methods.
-    */
+    /** Set by the `moveTo` and `moveFrom` methods. */
     public var stopVelocityOnCollide:Bool = true;
 
-    /**
-    * @property {integer} moveTimer - Internal time used by the `moveTo` and `moveFrom` methods.
-    * @private
-    */
+    /** Internal time used by the `moveTo` and `moveFrom` methods. */
     private var moveTimer:Float = 0;
 
-    /**
-    * @property {integer} moveDistance - Internal distance value, used by the `moveTo` and `moveFrom` methods.
-    * @private
-    */
+    /** Internal distance value, used by the `moveTo` and `moveFrom` methods. */
     private var moveDistance:Int = 0;
 
-    /**
-    * @property {integer} moveDuration - Internal duration value, used by the `moveTo` and `moveFrom` methods.
-    * @private
-    */
+    /** Internal duration value, used by the `moveTo` and `moveFrom` methods. */
     private var moveDuration:Float = 0;
 
-    /**
-    * @property {Phaser.Line} moveTarget - Set by the `moveTo` method, and updated each frame.
-    * @private
-    */
+    /** Set by the `moveTo` method, and updated each frame. */
     private var moveTarget:Line = null;
 
-    /**
-    * @property {Phaser.Point} moveEnd - Set by the `moveTo` method, and updated each frame.
-    * @private
-    */
+    /** Set by the `moveTo` method, and updated each frame. */
     private var moveEnd:Point = null;
 
-    /**
-    * @property {Phaser.Signal} onMoveComplete - Listen for the completion of `moveTo` or `moveFrom` events.
-    */
+    /** Listen for the completion of `moveTo` or `moveFrom` events. */
     public var onMoveComplete:Body->Bool->Void = null;
     @:noCompletion inline public function emitMoveComplete(body:Body, fromCollision:Bool):Void {
         if (onMoveComplete != null) {
@@ -481,39 +365,24 @@ class Body implements Collidable
     }
 
     /**
-    * @property {function} movementCallback - Optional callback. If set, invoked during the running of `moveTo` or `moveFrom` events.
-    * Note: this is not an event (emit{X}) because we are expecting a boolean return value.
-    */
+     * Optional callback. If set, invoked during the running of `moveTo` or `moveFrom` events.
+     * Note: this is not an event (emit{X}) because we are expecting a boolean return value.
+     */
     public var movementCallback:(body:Body,velocityX:Float,velocityY:Float,percent:Float)->Bool = null;
 
-    /**
-    * @property {boolean} _reset - Internal cache var.
-    * @private
-    */
+    /** Internal cache var. */
     private var _reset:Bool = true;
 
-    /**
-    * @property {number} _sx - Internal cache var.
-    * @private
-    */
+    /** Internal cache var. */
     private var _sx:Float = 1;
 
-    /**
-    * @property {number} _sy - Internal cache var.
-    * @private
-    */
+    /** Internal cache var. */
     private var _sy:Float = 1;
 
-    /**
-    * @property {number} _dx - Internal cache var.
-    * @private
-    */
+    /** Internal cache var. */
     private var _dx:Float = 0;
 
-    /**
-    * @property {number} _dy - Internal cache var.
-    * @private
-    */
+    /** Internal cache var. */
     private var _dy:Float = 0;
 
     public function new(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0) {
@@ -541,11 +410,8 @@ class Body implements Collidable
     }
 
     /**
-    * Update the Body's center from its position.
-    *
-    * @method Phaser.Physics.Arcade.Body#updateCenter
-    * @protected
-    */
+     * Update the Body's center from its position.
+     */
     inline public function updateCenter()
     {
 
@@ -566,11 +432,8 @@ class Body implements Collidable
     }
 
     /**
-    * Internal method.
-    *
-    * @method Phaser.Physics.Arcade.Body#preUpdate
-    * @protected
-    */
+     * Internal method.
+     */
     @:noCompletion
     inline public function preUpdate(world:World, x:Float, y:Float, width:Float, height:Float, rotation:Float = 0)
     {
@@ -641,7 +504,7 @@ class Body implements Collidable
                 this.speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
 
                 //  Now the State update will throw collision checks at the Body
-                //  And finally we'll integrate the new position back to the Sprite in postUpdate
+                //  And finally we'll integrate the new position back to the parent object in postUpdate
 
                 if (this.collideWorldBounds)
                 {
@@ -662,11 +525,8 @@ class Body implements Collidable
     }
 
     /**
-    * Internal method.
-    *
-    * @method Phaser.Physics.Arcade.Body#updateMovement
-    * @protected
-    */
+     * Internal method.
+     */
     inline function updateMovement(world:World):Bool
     {
 
@@ -708,15 +568,14 @@ class Body implements Collidable
     }
 
     /**
-    * If this Body is moving as a result of a call to `moveTo` or `moveFrom` (i.e. it
-    * has Body.isMoving true), then calling this method will stop the movement before
-    * either the duration or distance counters expire.
-    *
-    * The `onMoveComplete` signal is dispatched.
-    *
-    * @method Phaser.Physics.Arcade.Body#stopMovement
-    * @param {boolean} [stopVelocity] - Should the Body.velocity be set to zero?
-    */
+     * If this Body is moving as a result of a call to `moveTo` or `moveFrom` (i.e. it
+     * has Body.isMoving true), then calling this method will stop the movement before
+     * either the duration or distance counters expire.
+     *
+     * The `onMoveComplete` callback is dispatched.
+     *
+     * @param stopVelocity Should the Body.velocity be set to zero?
+     */
     inline public function stopMovement(stopVelocity:Bool):Void
     {
 
@@ -730,7 +589,7 @@ class Body implements Collidable
                 this.velocityY = 0;
             }
 
-            //  Send the Sprite this Body belongs to
+            //  Send the Body
             //  and a boolean indicating if it stopped because of a collision or not
             emitMoveComplete(this, (this.overlapX != 0 || this.overlapY != 0));
         }
@@ -738,11 +597,8 @@ class Body implements Collidable
     }
 
     /**
-    * Internal method.
-    *
-    * @method Phaser.Physics.Arcade.Body#postUpdate
-    * @protected
-    */
+     * Internal method.
+     */
     @:noCompletion
     inline public function postUpdate(world:World)
     {
@@ -825,12 +681,10 @@ class Body implements Collidable
     inline function get_dy():Float return this._dy;
 
     /**
-    * Internal method.
-    *
-    * @method Phaser.Physics.Arcade.Body#checkWorldBounds
-    * @protected
-    * @return {boolean} True if the Body collided with the world bounds, otherwise false.
-    */
+     * Internal method.
+     *
+     * @return True if the Body collided with the world bounds, otherwise false.
+     */
     inline function checkWorldBounds(world:World)
     {
         var posX = this.x;
@@ -882,35 +736,34 @@ class Body implements Collidable
     }
 
     /**
-    * Note: This method is experimental, and may be changed or removed in a future release.
-    *
-    * This method moves the Body in the given direction, for the duration specified.
-    * It works by setting the velocity on the Body, and an internal timer, and then
-    * monitoring the duration each frame. When the duration is up the movement is
-    * stopped and the `Body.onMoveComplete` signal is dispatched.
-    *
-    * Movement also stops if the Body collides or overlaps with any other Body.
-    *
-    * You can control if the velocity should be reset to zero on collision, by using
-    * the property `Body.stopVelocityOnCollide`.
-    *
-    * Stop the movement at any time by calling `Body.stopMovement`.
-    *
-    * You can optionally set a speed in pixels per second. If not specified it
-    * will use the current `Body.speed` value. If this is zero, the function will return false.
-    *
-    * Please note that due to browser timings you should allow for a variance in
-    * when the duration will actually expire. Depending on system it may be as much as
-    * +- 50ms. Also this method doesn't take into consideration any other forces acting
-    * on the Body, such as Gravity, drag or maxVelocity, all of which may impact the
-    * movement.
-    *
-    * @method Phaser.Physics.Arcade.Body#moveFrom
-    * @param  {number} duration  - The duration of the movement, in seconds.
-    * @param  {number} [speed] - The speed of the movement, in pixels per second. If not provided `Body.speed` is used.
-    * @param  {number} [direction] - The angle of movement in degrees. If not provided `Body.angle` is used.
-    * @return {boolean} True if the movement successfully started, otherwise false.
-    */
+     * Note: This method is experimental, and may be changed or removed in a future release.
+     *
+     * This method moves the Body in the given direction, for the duration specified.
+     * It works by setting the velocity on the Body, and an internal timer, and then
+     * monitoring the duration each frame. When the duration is up the movement is
+     * stopped and the `Body.onMoveComplete` callback is dispatched.
+     *
+     * Movement also stops if the Body collides or overlaps with any other Body.
+     *
+     * You can control if the velocity should be reset to zero on collision, by using
+     * the property `Body.stopVelocityOnCollide`.
+     *
+     * Stop the movement at any time by calling `Body.stopMovement`.
+     *
+     * You can optionally set a speed in pixels per second. If not specified it
+     * will use the current `Body.speed` value. If this is zero, the function will return false.
+     *
+     * Please note that due to browser timings you should allow for a variance in
+     * when the duration will actually expire. Depending on system it may be as much as
+     * +- 50ms. Also this method doesn't take into consideration any other forces acting
+     * on the Body, such as Gravity, drag or maxVelocity, all of which may impact the
+     * movement.
+     *
+     * @param duration The duration of the movement, in seconds.
+     * @param speed The speed of the movement, in pixels per second. If not provided `Body.speed` is used.
+     * @param direction The angle of movement in degrees. If not provided `Body.angle` is used.
+     * @return True if the movement successfully started, otherwise false.
+     */
     public function moveFrom(duration:Float, speed:Float = -999999999.0, direction:Float = -999999999.0):Bool
     {
 
@@ -959,34 +812,33 @@ class Body implements Collidable
     }
 
     /**
-    * Note: This method is experimental, and may be changed or removed in a future release.
-    *
-    * This method moves the Body in the given direction, for the duration specified.
-    * It works by setting the velocity on the Body, and an internal distance counter.
-    * The distance is monitored each frame. When the distance equals the distance
-    * specified in this call, the movement is stopped, and the `Body.onMoveComplete`
-    * signal is dispatched.
-    *
-    * Movement also stops if the Body collides or overlaps with any other Body.
-    *
-    * You can control if the velocity should be reset to zero on collision, by using
-    * the property `Body.stopVelocityOnCollide`.
-    *
-    * Stop the movement at any time by calling `Body.stopMovement`.
-    *
-    * Please note that due to browser timings you should allow for a variance in
-    * when the distance will actually expire.
-    *
-    * Note: This method doesn't take into consideration any other forces acting
-    * on the Body, such as Gravity, drag or maxVelocity, all of which may impact the
-    * movement.
-    *
-    * @method Phaser.Physics.Arcade.Body#moveTo
-    * @param  {float} duration - The duration of the movement, in seconds.
-    * @param  {float} distance - The distance, in pixels, the Body will move.
-    * @param  {float} [direction] - The angle of movement. If not provided `Body.angle` is used.
-    * @return {boolean} True if the movement successfully started, otherwise false.
-    */
+     * Note: This method is experimental, and may be changed or removed in a future release.
+     *
+     * This method moves the Body in the given direction, for the duration specified.
+     * It works by setting the velocity on the Body, and an internal distance counter.
+     * The distance is monitored each frame. When the distance equals the distance
+     * specified in this call, the movement is stopped, and the `Body.onMoveComplete`
+     * callback is dispatched.
+     *
+     * Movement also stops if the Body collides or overlaps with any other Body.
+     *
+     * You can control if the velocity should be reset to zero on collision, by using
+     * the property `Body.stopVelocityOnCollide`.
+     *
+     * Stop the movement at any time by calling `Body.stopMovement`.
+     *
+     * Please note that due to browser timings you should allow for a variance in
+     * when the distance will actually expire.
+     *
+     * Note: This method doesn't take into consideration any other forces acting
+     * on the Body, such as Gravity, drag or maxVelocity, all of which may impact the
+     * movement.
+     *
+     * @param duration The duration of the movement, in seconds.
+     * @param distance The distance, in pixels, the Body will move.
+     * @param direction The angle of movement. If not provided `Body.angle` is used.
+     * @return True if the movement successfully started, otherwise false.
+     */
     public function moveTo(duration:Float, distance:Float, direction:Float = -999999999.0):Bool
     {
 
@@ -1053,19 +905,16 @@ class Body implements Collidable
     }
 
     /**
-    * Sets this Body as using a circle, of the given radius, for all collision detection instead of a rectangle.
-    * The radius is given in pixels (relative to the Sprite's _texture_) and is the distance from the center of the circle to the edge.
-    *
-    * You can also control the x and y offset, which is the position of the Body relative to the top-left of the Sprite's texture.
-    *
-    * To change a Body back to being rectangular again call `Body.setSize`.
-    *
-    * Note: Circular collision only happens with other Arcade Physics bodies, it does not
-    * work against tile maps, where rectangular collision is the only method supported.
-    *
-    * @method Phaser.Physics.Arcade.Body#setCircle
-    * @param {number} [radius] - The radius of the Body in pixels. Pass a value of zero / undefined, to stop the Body using a circle for collision.
-    */
+     * Sets this Body as using a circle, of the given radius, for all collision detection instead of a rectangle.
+     * The radius is given in pixels and is the distance from the center of the circle to the edge.
+     *
+     * To change a Body back to being rectangular again call `setSize`.
+     *
+     * Note: Circular collision only happens with other Arcade Physics bodies, it does not
+     * work against tile maps, where rectangular collision is the only method supported.
+     *
+     * @param radius The radius of the Body in pixels. Pass a value of zero / undefined, to stop the Body using a circle for collision.
+     */
     public function setCircle(radius:Float):Void
     {
 
@@ -1088,12 +937,14 @@ class Body implements Collidable
     }
 
     /**
-    * Resets all Body values (velocity, acceleration, rotation, etc)
-    *
-    * @method Phaser.Physics.Arcade.Body#reset
-    * @param {number} x - The new x position of the Body.
-    * @param {number} y - The new y position of the Body.
-    */
+     * Resets all Body values (velocity, acceleration, rotation, etc)
+     *
+     * @param x The new x position of the Body.
+     * @param y The new y position of the Body.
+     * @param width The new width of the Body.
+     * @param height The new height of the Body.
+     * @param rotation The new rotation of the Body.
+     */
     inline public function reset(x:Float, y:Float, width:Float, height:Float, rotation:Float = 0):Void
     {
 
@@ -1114,9 +965,7 @@ class Body implements Collidable
     }
 
     /**
-     * Sets acceleration, velocity, and {@link #speed} to 0.
-     *
-     * @method Phaser.Physics.Arcade.Body#stop
+     * Sets acceleration, velocity, and speed to 0.
      */
     inline public function stop()
     {
@@ -1132,13 +981,12 @@ class Body implements Collidable
     }
 
     /**
-    * Tests if a world point lies within this Body.
-    *
-    * @method Phaser.Physics.Arcade.Body#hitTest
-    * @param {number} x - The world x coordinate to test.
-    * @param {number} y - The world y coordinate to test.
-    * @return {boolean} True if the given coordinates are inside this Body, otherwise false.
-    */
+     * Tests if a world point lies within this Body.
+     *
+     * @param x The world x coordinate to test.
+     * @param y The world y coordinate to test.
+     * @return True if the given coordinates are inside this Body, otherwise false.
+     */
     inline public function hitTest(x:Float, y:Float):Bool
     {
 
@@ -1147,11 +995,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns true if the bottom of this Body is in contact with either the world bounds or a tile.
-    *
-    * @method Phaser.Physics.Arcade.Body#onFloor
-    * @return {boolean} True if in contact with either the world bounds or a tile.
-    */
+     * Returns true if the bottom of this Body is in contact with either the world bounds or a tile.
+     *
+     * @return True if in contact with either the world bounds or a tile.
+     */
     inline public function isOnFloor():Bool
     {
 
@@ -1160,11 +1007,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns true if the top of this Body is in contact with either the world bounds or a tile.
-    *
-    * @method Phaser.Physics.Arcade.Body#onCeiling
-    * @return {boolean} True if in contact with either the world bounds or a tile.
-    */
+     * Returns true if the top of this Body is in contact with either the world bounds or a tile.
+     *
+     * @return True if in contact with either the world bounds or a tile.
+     */
     inline public function isOnCeiling():Bool
     {
 
@@ -1173,11 +1019,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns true if either side of this Body is in contact with either the world bounds or a tile.
-    *
-    * @method Phaser.Physics.Arcade.Body#onWall
-    * @return {boolean} True if in contact with either the world bounds or a tile.
-    */
+     * Returns true if either side of this Body is in contact with either the world bounds or a tile.
+     *
+     * @return True if in contact with either the world bounds or a tile.
+     */
     inline public function isOnWall():Bool
     {
 
@@ -1186,11 +1031,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns the absolute delta x value.
-    *
-    * @method Phaser.Physics.Arcade.Body#deltaAbsX
-    * @return {number} The absolute delta value.
-    */
+     * Returns the absolute delta x value.
+     *
+     * @return The absolute delta value.
+     */
     inline public function deltaAbsX():Float
     {
 
@@ -1199,11 +1043,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns the absolute delta y value.
-    *
-    * @method Phaser.Physics.Arcade.Body#deltaAbsY
-    * @return {number} The absolute delta value.
-    */
+     * Returns the absolute delta y value.
+     *
+     * @return The absolute delta value.
+     */
     inline public function deltaAbsY():Float
     {
 
@@ -1212,11 +1055,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns the delta x value. The difference between Body.x now and in the previous step.
-    *
-    * @method Phaser.Physics.Arcade.Body#deltaX
-    * @return {number} The delta value. Positive if the motion was to the right, negative if to the left.
-    */
+     * Returns the delta x value. The difference between Body.x now and in the previous step.
+     *
+     * @return The delta value. Positive if the motion was to the right, negative if to the left.
+     */
     inline public function deltaX():Float
     {
 
@@ -1225,11 +1067,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns the delta y value. The difference between Body.y now and in the previous step.
-    *
-    * @method Phaser.Physics.Arcade.Body#deltaY
-    * @return {number} The delta value. Positive if the motion was downwards, negative if upwards.
-    */
+     * Returns the delta y value. The difference between Body.y now and in the previous step.
+     *
+     * @return The delta value. Positive if the motion was downwards, negative if upwards.
+     */
     inline public function deltaY():Float
     {
 
@@ -1238,11 +1079,10 @@ class Body implements Collidable
     }
 
     /**
-    * Returns the delta z value. The difference between Body.rotation now and in the previous step.
-    *
-    * @method Phaser.Physics.Arcade.Body#deltaZ
-    * @return {number} The delta value. Positive if the motion was clockwise, negative if anti-clockwise.
-    */
+     * Returns the delta z value. The difference between Body.rotation now and in the previous step.
+     *
+     * @return The delta value. Positive if the motion was clockwise, negative if anti-clockwise.
+     */
     inline public function deltaZ():Float
     {
 
@@ -1251,13 +1091,11 @@ class Body implements Collidable
     }
 
     /**
-    * Destroys this Body.
-    *
-    * First it calls Group.removeFromHash if the Game Object this Body belongs to is part of a Group.
-    * Then it nulls the Game Objects body reference, and nulls this Body.sprite reference.
-    *
-    * @method Phaser.Physics.Arcade.Body#destroy
-    */
+     * Destroys this Body.
+     *
+     * First it removes this body from any groups it belongs to.
+     * Then it nulls the data reference.
+     */
     public function destroy():Void
     {
 
@@ -1295,12 +1133,12 @@ class Body implements Collidable
     }
 
     /**
-     * Return true if the given x/y coordinates are within the Circle object.
-     * @method Phaser.Circle.contains
-     * @param {Phaser.Circle} a - The Circle to be checked.
-     * @param {number} x - The X value of the coordinate to test.
-     * @param {number} y - The Y value of the coordinate to test.
-     * @return {boolean} True if the coordinates are within this circle, otherwise false.
+     * Return true if the given x/y coordinates are within the circular body.
+     *
+     * @param body The Body to be checked.
+     * @param x The X value of the coordinate to test.
+     * @param y The Y value of the coordinate to test.
+     * @return True if the coordinates are within this circle, otherwise false.
      */
     inline static function circleContains(body:Body, x:Float, y:Float):Bool
     {
@@ -1321,12 +1159,12 @@ class Body implements Collidable
     }
 
     /**
-     * Determines whether the specified coordinates are contained within the region defined by this Rectangle object.
-     * @method Phaser.Rectangle.contains
-     * @param {Phaser.Rectangle} a - The Rectangle object.
-     * @param {number} x - The x coordinate of the point to test.
-     * @param {number} y - The y coordinate of the point to test.
-     * @return {boolean} A value of true if the Rectangle object contains the specified point; otherwise false.
+     * Determines whether the specified coordinates are contained within the region defined by this rectangular body.
+     *
+     * @param body The Body object.
+     * @param x The x coordinate of the point to test.
+     * @param y The y coordinate of the point to test.
+     * @return A value of true if the Body contains the specified point; otherwise false.
      */
     inline static function rectangleContains(body:Body, x:Float, y:Float):Bool
     {

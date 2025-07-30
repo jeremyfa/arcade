@@ -5,17 +5,8 @@ import arcade.QuadTree.QuadTreePool;
 using arcade.Extensions;
 
 /**
-* @author       Richard Davey <rich@photonstorm.com>
-* @copyright    2016 Photon Storm Ltd.
-* @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
-*/
-
-/**
-* The Arcade Physics world. Contains Arcade Physics related collision, overlap and motion methods.
-*
-* @class Phaser.Physics.Arcade
-* @constructor
-*/
+ * The Arcade Physics world. Contains Arcade Physics related collision, overlap and motion methods.
+ */
 class World {
 
     /** The World gravity X setting. Defaults to 0 (no gravity). */
@@ -24,19 +15,27 @@ class World {
     /** The World gravity Y setting. Defaults to 0 (no gravity). */
     public var gravityY:Float = 0;
 
-    // The bounds inside of which the physics world exists.
+    /** The bounds x position inside of which the physics world exists. */
     public var boundsX:Float = 0;
+    /** The bounds y position inside of which the physics world exists. */
     public var boundsY:Float = 0;
+    /** The bounds width inside of which the physics world exists. */
     public var boundsWidth:Float = 0;
+    /** The bounds height inside of which the physics world exists. */
     public var boundsHeight:Float = 0;
 
-    // Which edges of the World bounds Bodies can collide against when `collideWorldBounds` is `true`.
-    // For example checkCollisionDown = false means Bodies cannot collide with the World.bounds.bottom.
-    // @property {object} checkCollision - An object containing allowed collision flags (up, down, left, right).
+    /**
+     * Which edges of the World bounds Bodies can collide against when `collideWorldBounds` is `true`.
+     * For example checkCollisionDown = false means Bodies cannot collide with the World.bounds.bottom.
+     */
     public var checkCollisionNone:Bool = false;
+    /** Whether Bodies can collide with the World upper bounds. */
     public var checkCollisionUp:Bool = true;
+    /** Whether Bodies can collide with the World lower bounds. */
     public var checkCollisionDown:Bool = true;
+    /** Whether Bodies can collide with the World left bounds. */
     public var checkCollisionLeft:Bool = true;
+    /** Whether Bodies can collide with the World right bounds. */
     public var checkCollisionRight:Bool = true;
 
     /** Used by the QuadTree to set the maximum number of objects per quad. */
@@ -51,7 +50,7 @@ class World {
     /** If true World.separate will always separate on the X axis before Y. Otherwise it will check gravity totals first. */
     public var forceX:Bool = false;
 
-    /** Used when colliding a Sprite vs. a Group, or a Group vs. a Group, this defines the direction the sort is based on. Default is `LEFT_RIGHT`. */
+    /** Used when colliding a Body vs. a Group, or a Group vs. a Group, this defines the direction the sort is based on. Default is `LEFT_RIGHT`. */
     public var sortDirection:SortDirection = SortDirection.LEFT_RIGHT;
 
     /** If `true` the QuadTree will not be used for any collision. QuadTrees are great if objects are well spread out in your game, otherwise they are a performance hit. If you enable this you can disable on a per body basis via `Body.skipQuadTree`. */
@@ -69,9 +68,7 @@ class World {
     /** When colliding/overlapping with groups. Use a quad tree if we reach this threshold value */
     public var maxObjectsWithoutQuadTree:Int = 10;
 
-    /**
-    * @property {number} tileBias - A value added to the delta values during collision with tiles. Adjust this if you get tunneling.
-    */
+    /** A value added to the delta values during collision with tiles. Adjust this if you get tunneling. */
     public var tileBias:Float = 16;
 
     /** Elapsed time since last tick. */
@@ -144,11 +141,10 @@ class World {
     /**
      * Updates the size of this physics world.
      *
-     * @method Phaser.Physics.Arcade#setBounds
-     * @param {number} x - Top left most corner of the world.
-     * @param {number} y - Top left most corner of the world.
-     * @param {number} width - New width of the world. Can never be smaller than the Game.width.
-     * @param {number} height - New height of the world. Can never be smaller than the Game.height.
+     * @param x Top left most corner of the world.
+     * @param y Top left most corner of the world.
+     * @param width New width of the world.
+     * @param height New height of the world.
      */
     inline public function setBounds(x:Float, y:Float, width:Float, height:Float):Void {
 
@@ -166,8 +162,7 @@ class World {
      *
      * When you add an Arcade Physics body to an object it will automatically add the object into its parent Groups hash array.
      *
-     * @method Phaser.Physics.Arcade#enableBody
-     * @param {object} object - The game object to create the physics body on. A body will only be created if this object has a null `body` property.
+     * @param body The body to enable.
      */
     public function enableBody(body:Body):Void {
 
@@ -178,8 +173,7 @@ class World {
     /**
      * Called automatically by a Physics body, it updates all motion related values on the Body unless `World.isPaused` is `true`.
      *
-     * @method Phaser.Physics.Arcade#updateMotion
-     * @param {Phaser.Physics.Arcade.Body} The Body object to be updated.
+     * @param body The Body object to be updated.
      */
     inline public function updateMotion(body:Body):Void
     {
@@ -200,14 +194,13 @@ class World {
      * A tween-like function that takes a starting velocity and some other factors and returns an altered velocity.
      * Based on a function in Flixel by @ADAMATOMIC
      *
-     * @method Phaser.Physics.Arcade#computeVelocity
-     * @param {number} axis - 0 for nothing, 1 for horizontal, 2 for vertical.
-     * @param {Phaser.Physics.Arcade.Body} body - The Body object to be updated.
-     * @param {number} velocity - Any component of velocity (e.g. 20).
-     * @param {number} acceleration - Rate at which the velocity is changing.
-     * @param {number} drag - Really kind of a deceleration, this is how much the velocity changes if Acceleration is not set.
-     * @param {number} [max=10000] - An absolute value cap for the velocity.
-     * @return {number} The altered Velocity value.
+     * @param axis 0 for nothing, 1 for horizontal, 2 for vertical.
+     * @param body The Body object to be updated.
+     * @param velocity Any component of velocity (e.g. 20).
+     * @param acceleration Rate at which the velocity is changing.
+     * @param drag Really kind of a deceleration, this is how much the velocity changes if Acceleration is not set.
+     * @param max An absolute value cap for the velocity.
+     * @return The altered Velocity value.
      */
     inline public function computeVelocity(axis:Axis, body:Body, velocity:Float, acceleration:Float, drag:Float, max:Float = 10000):Float
     {
@@ -259,7 +252,7 @@ class World {
     function getCollidableType(element:Collidable):Class<Dynamic> {
 
         #if js
-        var clazz:Class<Collidable> = untyped o.__class__;
+        var clazz:Class<Collidable> = untyped element.__class__;
         #else
         var clazz = Type.getClass(element);
         #end
@@ -310,9 +303,10 @@ class World {
     }
 
     /**
-     * Checks for overlaps between two bodies. The objects can be Sprites, Groups or Emitters.
-     * Unlike {@link #collide} the objects are NOT automatically separated or have any physics applied, they merely test for overlap results.
-     * @return {boolean} True if an overlap occurred otherwise false.
+     * Checks for overlaps between two bodies. The objects can be Bodies or Groups.
+     * Unlike `collide` the objects are NOT automatically separated or have any physics applied, they merely test for overlap results.
+     *
+     * @return True if an overlap occurred otherwise false.
      */
     public function overlapBodyVsBody(body1:Body, body2:Body, ?overlapCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
     {
@@ -479,8 +473,9 @@ class World {
     }
 
     /**
-     * Checks for collision between two bodies and separates them if colliding ({@link https://gist.github.com/samme/cbb81dd19f564dcfe2232761e575063d details}). If you don't require separation then use {@link #overlap} instead.
-     * @return {boolean} True if a collision occurred otherwise false.
+     * Checks for collision between two bodies and separates them if colliding. If you don't require separation then use `overlap` instead.
+     *
+     * @return True if a collision occurred otherwise false.
      */
     public function collideBodyVsBody(body1:Body, body2:Body, ?collideCallback:Body->Body->Void, ?processCallback:Body->Body->Bool):Bool
     {
@@ -612,15 +607,14 @@ class World {
     /**
      * This method will sort a Groups hash array.
      *
-     * If the Group has `physicsSortDirection` set it will use the sort direction defined.
+     * If the Group has `sortDirection` set it will use the sort direction defined.
      *
-     * Otherwise if the sortDirection parameter is undefined, or Group.physicsSortDirection is null, it will use Phaser.Physics.Arcade.sortDirection.
+     * Otherwise if the sortDirection parameter is undefined, or Group.sortDirection is null, it will use World.sortDirection.
      *
-     * By changing Group.physicsSortDirection you can customise each Group to sort in a different order.
+     * By changing Group.sortDirection you can customise each Group to sort in a different order.
      *
-     * @method Phaser.Physics.Arcade#sort
-     * @param {Phaser.Group} group - The Group to sort.
-     * @param {integer} [sortDirection] - The sort direction used to sort this Group.
+     * @param group The Group to sort.
+     * @param sortDirection The sort direction used to sort this Group.
      */
     public function sort(group:Group, sortDirection:SortDirection = SortDirection.INHERIT)
     {
@@ -660,14 +654,11 @@ class World {
     /**
      * The core separation function to separate two physics bodies.
      *
-     * @private
-     * @method Phaser.Physics.Arcade#separate
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body object to separate.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body object to separate.
-     * @param {function} [processCallback=null] - A callback function that lets you perform additional checks against the two objects if they overlap. If this function is set then the sprites will only be collided if it returns true.
-     * @param {object} [callbackContext] - The context in which to run the process callback.
-     * @param {boolean} overlapOnly - Just run an overlap or a full collision.
-     * @return {boolean} Returns true if the bodies collided, otherwise false.
+     * @param body1 The first Body object to separate.
+     * @param body2 The second Body object to separate.
+     * @param processCallback A callback function that lets you perform additional checks against the two objects if they overlap. If this function is set then the bodies will only be collided if it returns true.
+     * @param overlapOnly Just run an overlap or a full collision.
+     * @return Returns true if the bodies collided, otherwise false.
      */
     private function separate(body1:Body, body2:Body, ?processCallback:Body->Body->Bool, overlapOnly:Bool):Bool
     {
@@ -769,10 +760,9 @@ class World {
     /**
      * Check for intersection against two bodies.
      *
-     * @method Phaser.Physics.Arcade#intersects
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body object to check.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body object to check.
-     * @return {boolean} True if they intersect, otherwise false.
+     * @param body1 The first Body object to check.
+     * @param body2 The second Body object to check.
+     * @return True if they intersect, otherwise false.
      */
     public function intersects(body1:Body, body2:Body):Bool
     {
@@ -832,10 +822,9 @@ class World {
     /**
      * Checks to see if a circular Body intersects with a Rectangular Body.
      *
-     * @method Phaser.Physics.Arcade#circleBodyIntersects
-     * @param {Phaser.Physics.Arcade.Body} circle - The Body with `isCircle` set.
-     * @param {Phaser.Physics.Arcade.Body} body - The Body with `isCircle` not set (i.e. uses Rectangle shape)
-     * @return {boolean} Returns true if the bodies intersect, otherwise false.
+     * @param circle The Body with `isCircle` set.
+     * @param body The Body with `isCircle` not set (i.e. uses Rectangle shape)
+     * @return Returns true if the bodies intersect, otherwise false.
      */
     function circleBodyIntersects(circle:Body, body:Body):Bool
     {
@@ -853,12 +842,10 @@ class World {
     /**
      * The core separation function to separate two circular physics bodies.
      *
-     * @method Phaser.Physics.Arcade#separateCircle
-     * @private
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body to separate. Must have `Body.isCircle` true and a positive `radius`.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body to separate. Must have `Body.isCircle` true and a positive `radius`.
-     * @param {boolean} overlapOnly - If true the bodies will only have their overlap data set, no separation or exchange of velocity will take place.
-     * @return {boolean} Returns true if the bodies were separated or overlap, otherwise false.
+     * @param body1 The first Body to separate. Must have `Body.isCircle` true and a positive `radius`.
+     * @param body2 The second Body to separate. Must have `Body.isCircle` true and a positive `radius`.
+     * @param overlapOnly If true the bodies will only have their overlap data set, no separation or exchange of velocity will take place.
+     * @return Returns true if the bodies were separated or overlap, otherwise false.
      */
     function separateCircle(body1:Body, body2:Body, overlapOnly:Bool):Bool
     {
@@ -1019,11 +1006,10 @@ class World {
      * Calculates the horizontal overlap between two Bodies and sets their properties accordingly, including:
      * `touchingLeft`, `touchingRight` and `overlapX`.
      *
-     * @method Phaser.Physics.Arcade#getOverlapX
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body to separate.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body to separate.
-     * @param {boolean} overlapOnly - Is this an overlap only check, or part of separation?
-     * @return {float} Returns the amount of horizontal overlap between the two bodies.
+     * @param body1 The first Body to separate.
+     * @param body2 The second Body to separate.
+     * @param overlapOnly Is this an overlap only check, or part of separation?
+     * @return Returns the amount of horizontal overlap between the two bodies.
      */
     function getOverlapX(body1:Body, body2:Body, overlapOnly:Bool = false):Float
     {
@@ -1106,11 +1092,10 @@ class World {
      * Calculates the vertical overlap between two Bodies and sets their properties accordingly, including:
      * `touchingUp`, `touchingDown` and `overlapY`.
      *
-     * @method Phaser.Physics.Arcade#getOverlapY
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body to separate.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body to separate.
-     * @param {boolean} overlapOnly - Is this an overlap only check, or part of separation?
-     * @return {float} Returns the amount of vertical overlap between the two bodies.
+     * @param body1 The first Body to separate.
+     * @param body2 The second Body to separate.
+     * @param overlapOnly Is this an overlap only check, or part of separation?
+     * @return Returns the amount of vertical overlap between the two bodies.
      */
     function getOverlapY(body1:Body, body2:Body, overlapOnly:Bool = false):Float
     {
@@ -1192,12 +1177,10 @@ class World {
     /**
      * The core separation function to separate two physics bodies on the x axis.
      *
-     * @method Phaser.Physics.Arcade#separateX
-     * @private
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body to separate.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body to separate.
-     * @param {boolean} overlapOnly - If true the bodies will only have their overlap data set, no separation or exchange of velocity will take place.
-     * @return {boolean} Returns true if the bodies were separated or overlap, otherwise false.
+     * @param body1 The first Body to separate.
+     * @param body2 The second Body to separate.
+     * @param overlapOnly If true the bodies will only have their overlap data set, no separation or exchange of velocity will take place.
+     * @return Returns true if the bodies were separated or overlap, otherwise false.
      */
     function separateX(body1:Body, body2:Body, overlapOnly:Bool):Bool
     {
@@ -1263,12 +1246,10 @@ class World {
     /**
      * The core separation function to separate two physics bodies on the y axis.
      *
-     * @private
-     * @method Phaser.Physics.Arcade#separateY
-     * @param {Phaser.Physics.Arcade.Body} body1 - The first Body to separate.
-     * @param {Phaser.Physics.Arcade.Body} body2 - The second Body to separate.
-     * @param {boolean} overlapOnly - If true the bodies will only have their overlap data set, no separation or exchange of velocity will take place.
-     * @return {boolean} Returns true if the bodies were separated or overlap, otherwise false.
+     * @param body1 The first Body to separate.
+     * @param body2 The second Body to separate.
+     * @param overlapOnly If true the bodies will only have their overlap data set, no separation or exchange of velocity will take place.
+     * @return Returns true if the bodies were separated or overlap, otherwise false.
      */
     function separateY(body1:Body, body2:Body, overlapOnly:Bool):Bool
     {
@@ -1336,14 +1317,13 @@ class World {
      * Each child will be sent to the given callback for further processing.
      * Note that the children are not checked for depth order, but simply if they overlap the coordinate or not.
      *
-     * @method Phaser.Physics.Arcade#getObjectsAtLocation
-     * @param {number} x - The x coordinate to check.
-     * @param {number} y - The y coordinate to check.
-     * @param {Phaser.Group} group - The Group to check.
-     * @param {function} [callback] - A callback function that is called if the object overlaps the coordinates. The callback will be sent two parameters: the callbackArg and the Object that overlapped the location.
-     * @param {object} [callbackContext] - The context in which to run the callback.
-     * @param {object} [callbackArg] - An argument to pass to the callback.
-     * @return An array of the Sprites from the Group that overlapped the coordinates.
+     * @param x The x coordinate to check.
+     * @param y The y coordinate to check.
+     * @param group The Group to check.
+     * @param callback A callback function that is called if the object overlaps the coordinates. The callback will be sent two parameters: the callbackArg and the Body that overlapped the location.
+     * @param callbackArg An argument to pass to the callback.
+     * @param output An optional array to store the results in.
+     * @return An array of the Bodies from the Group that overlapped the coordinates.
      */
     public function getObjectsAtLocation<T>(x:Float, y:Float, group:Group, ?callback:T->Body->Void, ?callbackArg:T, ?output:Array<Body>):Array<Body>
     {
@@ -1380,19 +1360,18 @@ class World {
     }
 
     /**
-     * Move the given display object towards the destination object at a steady velocity.
+     * Move the given body towards the destination body at a steady velocity.
      * If you specify a maxTime then it will adjust the speed (overwriting what you set) so it arrives at the destination in that number of seconds.
      * Timings are approximate due to the way browser timers work. Allow for a variance of +- 50ms.
-     * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
-     * Note: The display object doesn't stop moving once it reaches the destination coordinates.
+     * Note: The body does not continuously track the target. If the target changes location during transit the body will not modify its course.
+     * Note: The body doesn't stop moving once it reaches the destination coordinates.
      * Note: Doesn't take into account acceleration, maxVelocity or drag (if you've set drag or acceleration too high this object may not move at all)
      *
-     * @method Phaser.Physics.Arcade#moveToObject
-     * @param {any} displayObject - The display object to move.
-     * @param {any} destination - The display object to move towards. Can be any object but must have visible x/y properties.
-     * @param {number} [speed=60] - The speed it will move, in pixels per second (default is 60 pixels/sec)
-     * @param {number} [maxTime=0] - Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
-     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
+     * @param body The body to move.
+     * @param destination The body to move towards. Must have x/y properties.
+     * @param speed The speed it will move, in pixels per second (default is 60 pixels/sec)
+     * @param maxTime Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
+     * @return The angle (in radians) that the object should be visually set to in order to match its new velocity.
      */
     public function moveToDestination(body:Body, destination:Body, speed:Float = 60, maxTime:Float = 0)
     {
@@ -1413,20 +1392,19 @@ class World {
     }
 
     /**
-     * Move the given display object towards the x/y coordinates at a steady velocity.
+     * Move the given body towards the x/y coordinates at a steady velocity.
      * If you specify a maxTime then it will adjust the speed (over-writing what you set) so it arrives at the destination in that number of seconds.
      * Timings are approximate due to the way browser timers work. Allow for a variance of +- 50ms.
-     * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
-     * Note: The display object doesn't stop moving once it reaches the destination coordinates.
+     * Note: The body does not continuously track the target. If the target changes location during transit the body will not modify its course.
+     * Note: The body doesn't stop moving once it reaches the destination coordinates.
      * Note: Doesn't take into account acceleration, maxVelocity or drag (if you've set drag or acceleration too high this object may not move at all)
      *
-     * @method Phaser.Physics.Arcade#moveToXY
-     * @param {any} displayObject - The display object to move.
-     * @param {number} x - The x coordinate to move towards.
-     * @param {number} y - The y coordinate to move towards.
-     * @param {number} [speed=60] - The speed it will move, in pixels per second (default is 60 pixels/sec)
-     * @param {number} [maxTime=0] - Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
-     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
+     * @param body The body to move.
+     * @param x The x coordinate to move towards.
+     * @param y The y coordinate to move towards.
+     * @param speed The speed it will move, in pixels per second (default is 60 pixels/sec)
+     * @param maxTime Time given in milliseconds (1000 = 1 sec). If set the speed is adjusted so the object will arrive at destination in the given number of ms.
+     * @return The angle (in radians) that the object should be visually set to in order to match its new velocity.
      */
     public function moveToXY(body:Body, x:Float, y:Float, speed:Float = 60, maxTime:Float = 0)
     {
@@ -1447,13 +1425,12 @@ class World {
 
     /**
      * Given the angle (in degrees) and speed calculate the velocity and return it as a Point object, or set it to the given point object.
-     * One way to use this is: velocityFromAngle(angle, 200, sprite.velocity) which will set the values directly to the sprites velocity and not create a new Point object.
+     * One way to use this is: velocityFromAngle(angle, 200, point) which will set the values directly to the point and not create a new Point object.
      *
-     * @method Phaser.Physics.Arcade#velocityFromAngle
-     * @param {number} angle - The angle in degrees calculated in clockwise positive direction (down = 90 degrees positive, right = 0 degrees positive, up = 90 degrees negative)
-     * @param {number} [speed=60] - The speed it will move, in pixels per second sq.
-     * @param {Phaser.Point|object} [point] - The Point object in which the x and y properties will be set to the calculated velocity.
-     * @return {Phaser.Point} - A Point where point.x contains the velocity x value and point.y contains the velocity y value.
+     * @param angle The angle in degrees calculated in clockwise positive direction (down = 90 degrees positive, right = 0 degrees positive, up = 90 degrees negative)
+     * @param speed The speed it will move, in pixels per second sq.
+     * @param point The Point object in which the x and y properties will be set to the calculated velocity.
+     * @return A Point where point.x contains the velocity x value and point.y contains the velocity y value.
      */
     public function velocityFromAngle(angle:Float, speed:Float = 60, ?point:Point):Point
     {
@@ -1468,13 +1445,12 @@ class World {
 
     /**
      * Given the rotation (in radians) and speed calculate the velocity and return it as a Point object, or set it to the given point object.
-     * One way to use this is: velocityFromRotation(rotation, 200, sprite.velocity) which will set the values directly to the sprites velocity and not create a new Point object.
+     * One way to use this is: velocityFromRotation(rotation, 200, point) which will set the values directly to the point and not create a new Point object.
      *
-     * @method Phaser.Physics.Arcade#velocityFromRotation
-     * @param {number} rotation - The angle in radians.
-     * @param {number} [speed=60] - The speed it will move, in pixels per second sq.
-     * @param {Phaser.Point|object} [point] - The Point object in which the x and y properties will be set to the calculated velocity.
-     * @return {Phaser.Point} - A Point where point.x contains the velocity x value and point.y contains the velocity y value.
+     * @param rotation The angle in radians.
+     * @param speed The speed it will move, in pixels per second sq.
+     * @param point The Point object in which the x and y properties will be set to the calculated velocity.
+     * @return A Point where point.x contains the velocity x value and point.y contains the velocity y value.
      */
     public function velocityFromRotation(rotation:Float, speed:Float = 60, ?point:Point):Point
     {
@@ -1489,13 +1465,12 @@ class World {
 
     /**
      * Given the rotation (in radians) and speed calculate the acceleration and return it as a Point object, or set it to the given point object.
-     * One way to use this is: accelerationFromRotation(rotation, 200, sprite.acceleration) which will set the values directly to the sprites acceleration and not create a new Point object.
+     * One way to use this is: accelerationFromRotation(rotation, 200, point) which will set the values directly to the point and not create a new Point object.
      *
-     * @method Phaser.Physics.Arcade#accelerationFromRotation
-     * @param {number} rotation - The angle in radians.
-     * @param {number} [speed=60] - The speed it will move, in pixels per second sq.
-     * @param {Phaser.Point|object} [point] - The Point object in which the x and y properties will be set to the calculated acceleration.
-     * @return {Phaser.Point} - A Point where point.x contains the acceleration x value and point.y contains the acceleration y value.
+     * @param rotation The angle in radians.
+     * @param speed The speed it will move, in pixels per second sq.
+     * @param point The Point object in which the x and y properties will be set to the calculated acceleration.
+     * @return A Point where point.x contains the acceleration x value and point.y contains the acceleration y value.
      */
     public function accelerationFromRotation(rotation:Float, speed:Float = 60, ?point:Point):Point
     {
@@ -1509,18 +1484,17 @@ class World {
     }
 
     /**
-     * Sets the acceleration.x/y property on the display object so it will move towards the target at the given speed (in pixels per second sq.)
-     * You must give a maximum speed value, beyond which the display object won't go any faster.
-     * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
-     * Note: The display object doesn't stop moving once it reaches the destination coordinates.
+     * Sets the acceleration.x/y property on the body so it will move towards the target at the given speed (in pixels per second sq.)
+     * You must give a maximum speed value, beyond which the body won't go any faster.
+     * Note: The body does not continuously track the target. If the target changes location during transit the body will not modify its course.
+     * Note: The body doesn't stop moving once it reaches the destination coordinates.
      *
-     * @method Phaser.Physics.Arcade#accelerateToObject
-     * @param {any} displayObject - The display object to move.
-     * @param {any} destination - The display object to move towards. Can be any object but must have visible x/y properties.
-     * @param {number} [speed=60] - The speed it will accelerate in pixels per second.
-     * @param {number} [xSpeedMax=1000] - The maximum x velocity the display object can reach.
-     * @param {number} [ySpeedMax=1000] - The maximum y velocity the display object can reach.
-     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new trajectory.
+     * @param body The body to move.
+     * @param destination The body to move towards. Must have x/y properties.
+     * @param speed The speed it will accelerate in pixels per second.
+     * @param xSpeedMax The maximum x velocity the body can reach.
+     * @param ySpeedMax The maximum y velocity the body can reach.
+     * @return The angle (in radians) that the object should be visually set to in order to match its new trajectory.
      */
     public function accelerateToDestination(body:Body, destination:Body, speed:Float = 60, xSpeedMax:Float = 1000, ySpeedMax:Float = 1000):Float
     {
@@ -1536,19 +1510,18 @@ class World {
     }
 
     /**
-     * Sets the acceleration.x/y property on the display object so it will move towards the x/y coordinates at the given speed (in pixels per second sq.)
-     * You must give a maximum speed value, beyond which the display object won't go any faster.
-     * Note: The display object does not continuously track the target. If the target changes location during transit the display object will not modify its course.
-     * Note: The display object doesn't stop moving once it reaches the destination coordinates.
+     * Sets the acceleration.x/y property on the body so it will move towards the x/y coordinates at the given speed (in pixels per second sq.)
+     * You must give a maximum speed value, beyond which the body won't go any faster.
+     * Note: The body does not continuously track the target. If the target changes location during transit the body will not modify its course.
+     * Note: The body doesn't stop moving once it reaches the destination coordinates.
      *
-     * @method Phaser.Physics.Arcade#accelerateToXY
-     * @param {any} displayObject - The display object to move.
-     * @param {number} x - The x coordinate to accelerate towards.
-     * @param {number} y - The y coordinate to accelerate towards.
-     * @param {number} [speed=60] - The speed it will accelerate in pixels per second.
-     * @param {number} [xSpeedMax=1000] - The maximum x velocity the display object can reach.
-     * @param {number} [ySpeedMax=1000] - The maximum y velocity the display object can reach.
-     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new trajectory.
+     * @param body The body to move.
+     * @param x The x coordinate to accelerate towards.
+     * @param y The y coordinate to accelerate towards.
+     * @param speed The speed it will accelerate in pixels per second.
+     * @param xSpeedMax The maximum x velocity the body can reach.
+     * @param ySpeedMax The maximum y velocity the body can reach.
+     * @return The angle (in radians) that the object should be visually set to in order to match its new trajectory.
      */
     public function accelerateToXY(body:Body, x:Float, y:Float, speed:Float = 60, xSpeedMax:Float = 1000, ySpeedMax:Float = 1000):Float
     {
@@ -1564,24 +1537,15 @@ class World {
     }
 
     /**
-     * Find the distance between two display objects (like Sprites).
-     *
-     * The optional `world` argument allows you to return the result based on the Game Objects `world` property,
-     * instead of its `x` and `y` values. This is useful of the object has been nested inside an offset Group,
-     * or parent Game Object.
-     *
-     * If you have nested objects and need to calculate the distance between their centers in World coordinates,
-     * set their anchors to (0.5, 0.5) and use the `world` argument.
+     * Find the distance between two bodies.
      *
      * If objects aren't nested or they share a parent's offset, you can calculate the distance between their
-     * centers with the `useCenter` argument, regardless of their anchor values.
+     * centers with the `useCenter` argument.
      *
-     * @method Phaser.Physics.Arcade#distanceBetween
-     * @param {any} source - The Display Object to test from.
-     * @param {any} target - The Display Object to test to.
-     * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default). If `useCenter` is true, this value is ignored.
-     * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
-     * @return {number} The distance between the source and target objects.
+     * @param source The Body to test from.
+     * @param target The Body to test to.
+     * @param useCenter Calculate the distance using the centerX and centerY coordinates.
+     * @return The distance between the source and target objects.
      */
     public function distanceBetween(source:Body, target:Body, useCenter:Bool = false):Float
     {
@@ -1605,20 +1569,14 @@ class World {
     }
 
     /**
-     * Find the distance between a display object (like a Sprite) and the given x/y coordinates.
-     * The calculation is made from the display objects x/y coordinate. This may be the top-left if its anchor hasn't been changed.
-     * If you need to calculate from the center of a display object instead use {@link #distanceBetween} with the `useCenter` argument.
+     * Find the distance between a body and the given x/y coordinates.
+     * The calculation is made from the body's x/y coordinate. This may be the top-left.
+     * If you need to calculate from the center of a body instead use `distanceBetween` with the `useCenter` argument.
      *
-     * The optional `world` argument allows you to return the result based on the Game Objects `world` property,
-     * instead of its `x` and `y` values. This is useful of the object has been nested inside an offset Group,
-     * or parent Game Object.
-     *
-     * @method Phaser.Physics.Arcade#distanceToXY
-     * @param {any} displayObject - The Display Object to test from.
-     * @param {number} x - The x coordinate to move towards.
-     * @param {number} y - The y coordinate to move towards.
-     * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default)
-     * @return {number} The distance between the object and the x/y coordinates.
+     * @param body The Body to test from.
+     * @param x The x coordinate to move towards.
+     * @param y The y coordinate to move towards.
+     * @return The distance between the object and the x/y coordinates.
      */
     inline public function distanceToXY(body:Body, x:Float, y:Float):Float
     {
@@ -1632,14 +1590,13 @@ class World {
 
 
     /**
-     * From a set of points or display objects, find the one closest to a source point or object.
+     * From a set of bodies, find the one closest to a source body.
      *
-     * @method Phaser.Physics.Arcade#closest
-     * @param {any} source - The {@link Phaser.Point Point} or Display Object distances will be measured from.
-     * @param {any[]} targets - The {@link Phaser.Point Points} or Display Objects whose distances to the source will be compared.
-     * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default). If `useCenter` is true, this value is ignored.
-     * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
-     * @return {any} - The first target closest to the origin.
+     * @param source The Body distances will be measured from.
+     * @param targets The Bodies whose distances to the source will be compared.
+     * @param world Calculate the distance using World coordinates (true), or Object coordinates (false, the default). If `useCenter` is true, this value is ignored.
+     * @param useCenter Calculate the distance using the centerX and centerY coordinates. If true, this value overrides the `world` argument.
+     * @return The first target closest to the origin.
      */
     public function closest(source:Body, targets:Array<Body>, world:Bool = false, useCenter:Bool = false):Body
     {
@@ -1663,14 +1620,12 @@ class World {
     }
 
     /**
-     * From a set of points or display objects, find the one farthest from a source point or object.
+     * From a set of bodies, find the one farthest from a source body.
      *
-     * @method Phaser.Physics.Arcade#farthest
-     * @param {any} source - The {@link Phaser.Point Point} or Display Object distances will be measured from.
-     * @param {any[]} targets - The {@link Phaser.Point Points} or Display Objects whose distances to the source will be compared.
-     * @param {boolean} [world=false] - Calculate the distance using World coordinates (true), or Object coordinates (false, the default). If `useCenter` is true, this value is ignored.
-     * @param {boolean} [useCenter=false] - Calculate the distance using the {@link Phaser.Sprite#centerX} and {@link Phaser.Sprite#centerY} coordinates. If true, this value overrides the `world` argument.
-     * @return {any} - The target closest to the origin.
+     * @param source The Body distances will be measured from.
+     * @param targets The Bodies whose distances to the source will be compared.
+     * @param useCenter Calculate the distance using the centerX and centerY coordinates.
+     * @return The target farthest from the origin.
      */
     public function farthest(source:Body, targets:Array<Body>, useCenter:Bool = false):Body
     {
@@ -1694,17 +1649,11 @@ class World {
     }
 
     /**
-     * Find the angle in radians between two display objects (like Sprites).
+     * Find the angle in radians between two bodies.
      *
-     * The optional `world` argument allows you to return the result based on the Game Objects `world` property,
-     * instead of its `x` and `y` values. This is useful of the object has been nested inside an offset Group,
-     * or parent Game Object.
-     *
-     * @method Phaser.Physics.Arcade#angleBetween
-     * @param {any} source - The Display Object to test from.
-     * @param {any} target - The Display Object to test to.
-     * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
-     * @return {number} The angle in radians between the source and target display objects.
+     * @param source The Body to test from.
+     * @param target The Body to test to.
+     * @return The angle in radians between the source and target bodies.
      */
     inline public function angleBetween(source:Body, target:Body):Float
     {
@@ -1714,12 +1663,11 @@ class World {
     }
 
     /**
-     * Find the angle in radians between centers of two display objects (like Sprites).
+     * Find the angle in radians between centers of two bodies.
      *
-     * @method Phaser.Physics.Arcade#angleBetweenCenters
-     * @param {any} source - The Display Object to test from.
-     * @param {any} target - The Display Object to test to.
-     * @return {number} The angle in radians between the source and target display objects.
+     * @param source The Body to test from.
+     * @param target The Body to test to.
+     * @return The angle in radians between the source and target bodies.
      */
     public function angleBetweenCenters(source:Body, target:Body):Float
     {
@@ -1732,18 +1680,12 @@ class World {
     }
 
     /**
-     * Find the angle in radians between a display object (like a Sprite) and the given x/y coordinate.
+     * Find the angle in radians between a body and the given x/y coordinate.
      *
-     * The optional `world` argument allows you to return the result based on the Game Objects `world` property,
-     * instead of its `x` and `y` values. This is useful of the object has been nested inside an offset Group,
-     * or parent Game Object.
-     *
-     * @method Phaser.Physics.Arcade#angleToXY
-     * @param {any} displayObject - The Display Object to test from.
-     * @param {number} x - The x coordinate to get the angle to.
-     * @param {number} y - The y coordinate to get the angle to.
-     * @param {boolean} [world=false] - Calculate the angle using World coordinates (true), or Object coordinates (false, the default)
-     * @return {number} The angle in radians between displayObject.x/y to Pointer.x/y
+     * @param body The Body to test from.
+     * @param x The x coordinate to get the angle to.
+     * @param y The y coordinate to get the angle to.
+     * @return The angle in radians between body.x/y to x/y
      */
     inline public function angleToXY(body:Body, x:Float, y:Float):Float
     {
@@ -1841,15 +1783,16 @@ class World {
     }
 
     /**
-    * The core separation function to separate a physics body and a tile.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#separateTile
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {Phaser.Tile} tile - The tile to collide against.
-    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
-    * @return {boolean} Returns true if the body was separated, otherwise false.
-    */
+     * The core separation function to separate a physics body and a tile.
+     *
+     * @param i The index of the tile.
+     * @param body The Body object to separate.
+     * @param tile The tile to collide against.
+     * @param offsetX The x offset.
+     * @param offsetY The y offset.
+     * @param overlapOnly Whether to only check for overlap.
+     * @return Returns true if the body was separated, otherwise false.
+     */
     function separateTile(i:Int, body:Body, tile:Tile, offsetX:Float, offsetY:Float, overlapOnly:Bool):Bool {
 
         if (!body.enable) {
@@ -1951,15 +1894,14 @@ class World {
     }
 
     /**
-    * Check the body against the given tile on the X axis.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#tileCheckX
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {Phaser.Tile} tile - The tile to check.
-    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
-    * @return {number} The amount of separation that occurred.
-    */
+     * Check the body against the given tile on the X axis.
+     *
+     * @param body The Body object to separate.
+     * @param tile The tile to check.
+     * @param offsetX The x offset.
+     * @param offsetY The y offset.
+     * @return The amount of separation that occurred.
+     */
     function tileCheckX(body:Body, tile:Tile, offsetX:Float, offsetY:Float):Float {
 
         var ox:Float = 0;
@@ -2008,15 +1950,14 @@ class World {
     }
 
     /**
-    * Check the body against the given tile on the Y axis.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#tileCheckY
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {Phaser.Tile} tile - The tile to check.
-    * @param {Phaser.TilemapLayer} tilemapLayer - The tilemapLayer to collide against.
-    * @return {number} The amount of separation that occurred.
-    */
+     * Check the body against the given tile on the Y axis.
+     *
+     * @param body The Body object to separate.
+     * @param tile The tile to check.
+     * @param offsetX The x offset.
+     * @param offsetY The y offset.
+     * @return The amount of separation that occurred.
+     */
     function tileCheckY(body:Body, tile:Tile, offsetX:Float, offsetY:Float):Float {
 
         var oy:Float = 0;
@@ -2065,13 +2006,11 @@ class World {
     }
 
     /**
-    * Internal function to process the separation of a physics body from a tile.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#processTileSeparationX
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {number} x - The x separation amount.
-    */
+     * Internal function to process the separation of a physics body from a tile.
+     *
+     * @param body The Body object to separate.
+     * @param x The x separation amount.
+     */
     function processTileSeparationX(body:Body, x:Float):Void {
 
         if (x < 0)
@@ -2099,13 +2038,11 @@ class World {
     }
 
     /**
-    * Internal function to process the separation of a physics body from a tile.
-    *
-    * @private
-    * @method Phaser.Physics.Arcade#processTileSeparationY
-    * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
-    * @param {number} y - The y separation amount.
-    */
+     * Internal function to process the separation of a physics body from a tile.
+     *
+     * @param body The Body object to separate.
+     * @param y The y separation amount.
+     */
     function processTileSeparationY(body:Body, y:Float):Void {
 
         if (y < 0)

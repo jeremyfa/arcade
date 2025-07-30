@@ -1,5 +1,9 @@
 package arcade;
 
+/**
+ * Defines sorting directions for physics bodies during collision detection.
+ * The sort direction helps optimize collision checks based on the game world's layout.
+ */
 enum abstract SortDirection(Int) from Int to Int {
 
     /** Inherit from parent */
@@ -20,4 +24,4 @@ enum abstract SortDirection(Int) from Int to Int {
     /** Use this if your game world is narrow but tall and scrolls from the bottom to the top (i.e. Commando or a vertically scrolling shoot-em-up) */
     var BOTTOM_TOP:Int = 4;
 
-} //SortDirection
+}
