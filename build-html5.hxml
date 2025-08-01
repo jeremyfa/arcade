@@ -1,7 +1,7 @@
 -cp .
 -cp test
 -main arcade.Test
--js test-output/arcade-tests.js
+-js out/test/arcade-tests.js
 -dce full
 -D analyzer-optimize
 -debug

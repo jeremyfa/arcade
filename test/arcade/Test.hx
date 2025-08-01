@@ -23,6 +23,8 @@ class Test {
     static var mouseX:Float = 0;
     static var mouseY:Float = 0;
     static var mouseDown:Bool = false;
+    static var ctrlPressed:Bool = false;
+    static var cmdPressed:Bool = false;
 
     public static function main():Void {
         // Initialize canvas
@@ -30,7 +32,23 @@ class Test {
         canvas.width = 800;
         canvas.height = 600;
         canvas.style.border = "1px solid #333";
-        Browser.document.body.appendChild(canvas);
+        canvas.style.display = "block";
+        canvas.tabIndex = 1; // Make canvas focusable
+
+        // Create a container div for canvas and navigation buttons
+        var container = Browser.document.createDivElement();
+        container.style.position = "relative";
+        container.style.display = "inline-block";
+        container.style.margin = "0 auto";
+
+        // Create wrapper for centering
+        var wrapper = Browser.document.createDivElement();
+        wrapper.style.textAlign = "center";
+        wrapper.style.marginTop = "20px";
+
+        Browser.document.body.appendChild(wrapper);
+        wrapper.appendChild(container);
+        container.appendChild(canvas);
 
         ctx = canvas.getContext2d();
 
@@ -43,10 +61,16 @@ class Test {
         // Setup controls
         setupControls();
 
+        // Create navigation buttons
+        createNavigationButtons(container);
+
         // Start first test
         if (tests.length > 0) {
             tests[currentTest].setup();
         }
+
+        // Focus canvas by default
+        canvas.focus();
 
         // Start animation loop
         lastTime = Browser.window.performance.now();
@@ -68,37 +92,115 @@ class Test {
         ];
     }
 
+    static function createNavigationButtons(container:js.html.DivElement):Void {
+        // Left button
+        var leftBtn = Browser.document.createButtonElement();
+        leftBtn.innerHTML = "◀";
+        leftBtn.style.position = "absolute";
+        leftBtn.style.left = "-50px";
+        leftBtn.style.top = "50%";
+        leftBtn.style.transform = "translateY(-50%)";
+        leftBtn.style.width = "40px";
+        leftBtn.style.height = "40px";
+        leftBtn.style.fontSize = "20px";
+        leftBtn.style.cursor = "pointer";
+        leftBtn.onclick = function(e) {
+            previousTest();
+            canvas.focus(); // Return focus to canvas
+        };
+        container.appendChild(leftBtn);
+
+        // Right button
+        var rightBtn = Browser.document.createButtonElement();
+        rightBtn.innerHTML = "▶";
+        rightBtn.style.position = "absolute";
+        rightBtn.style.right = "-50px";
+        rightBtn.style.top = "50%";
+        rightBtn.style.transform = "translateY(-50%)";
+        rightBtn.style.width = "40px";
+        rightBtn.style.height = "40px";
+        rightBtn.style.fontSize = "20px";
+        rightBtn.style.cursor = "pointer";
+        rightBtn.onclick = function(e) {
+            nextTest();
+            canvas.focus(); // Return focus to canvas
+        };
+        container.appendChild(rightBtn);
+    }
+
     static function setupControls():Void {
         // Create UI
         var info = Browser.document.createDivElement();
         info.innerHTML = '<h2>Arcade Physics Tests</h2>' +
-            '<p>Press LEFT/RIGHT arrows to switch tests | Current test: <span id="testName"></span></p>' +
+            '<p>Press Ctrl/Cmd + LEFT/RIGHT arrows or use buttons to switch tests | Current test: <span id="testName"></span></p>' +
             '<p id="testInfo"></p>';
-        Browser.document.body.insertBefore(info, canvas);
+        info.style.textAlign = "center";
+        Browser.document.body.insertBefore(info, Browser.document.body.firstChild);
 
-        // Keyboard events
-        Browser.document.addEventListener("keydown", function(e:KeyboardEvent) {
+        // Canvas-focused keyboard events
+        canvas.addEventListener("keydown", function(e:KeyboardEvent) {
             keys.set(e.keyCode, true);
+
+            // Track Ctrl/Cmd state
+            if (e.keyCode == 17) ctrlPressed = true; // Ctrl
+            if (e.keyCode == 91 || e.keyCode == 93) cmdPressed = true; // Cmd
 
             // Store the actual key character for layout-agnostic input
             if (e.key != null) {
                 keyChars.set(e.key.toLowerCase(), true);
             }
 
-            // Switch tests
-            if (e.keyCode == 37) { // Left arrow
-                previousTest();
-            } else if (e.keyCode == 39) { // Right arrow
-                nextTest();
+            // Switch tests with Ctrl/Cmd + arrows
+            if (ctrlPressed || cmdPressed) {
+                if (e.keyCode == 37) { // Left arrow
+                    previousTest();
+                    e.preventDefault();
+                } else if (e.keyCode == 39) { // Right arrow
+                    nextTest();
+                    e.preventDefault();
+                }
+            }
+
+            // Prevent default for game keys to avoid scrolling
+            var gameKeys = [32, 37, 38, 39, 40]; // Space, arrows
+            if (gameKeys.indexOf(e.keyCode) != -1) {
+                e.preventDefault();
             }
         });
 
-        Browser.document.addEventListener("keyup", function(e:KeyboardEvent) {
+        canvas.addEventListener("keyup", function(e:KeyboardEvent) {
             keys.set(e.keyCode, false);
+
+            // Track Ctrl/Cmd state
+            if (e.keyCode == 17) ctrlPressed = false; // Ctrl
+            if (e.keyCode == 91 || e.keyCode == 93) cmdPressed = false; // Cmd
 
             // Clear the key character
             if (e.key != null) {
                 keyChars.set(e.key.toLowerCase(), false);
+            }
+
+            // Prevent default for game keys
+            var gameKeys = [32, 37, 38, 39, 40]; // Space, arrows
+            if (gameKeys.indexOf(e.keyCode) != -1) {
+                e.preventDefault();
+            }
+        });
+
+        // Also handle document-level key events but only when canvas has focus
+        Browser.document.addEventListener("keydown", function(e:KeyboardEvent) {
+            if (Browser.document.activeElement == canvas) {
+                // Track Ctrl/Cmd state globally
+                if (e.keyCode == 17) ctrlPressed = true;
+                if (e.keyCode == 91 || e.keyCode == 93) cmdPressed = true;
+            }
+        });
+
+        Browser.document.addEventListener("keyup", function(e:KeyboardEvent) {
+            if (Browser.document.activeElement == canvas) {
+                // Track Ctrl/Cmd state globally
+                if (e.keyCode == 17) ctrlPressed = false;
+                if (e.keyCode == 91 || e.keyCode == 93) cmdPressed = false;
             }
         });
 
@@ -111,10 +213,16 @@ class Test {
 
         canvas.addEventListener("mousedown", function(e:MouseEvent) {
             mouseDown = true;
+            canvas.focus(); // Ensure canvas has focus when clicked
         });
 
         canvas.addEventListener("mouseup", function(e:MouseEvent) {
             mouseDown = false;
+        });
+
+        // Click anywhere on canvas to focus it
+        canvas.addEventListener("click", function(e:MouseEvent) {
+            canvas.focus();
         });
     }
 
@@ -125,6 +233,10 @@ class Test {
         currentTest = (currentTest + 1) % tests.length;
         tests[currentTest].setup();
         updateTestInfo();
+
+        // Clear all key states to prevent stuck keys
+        keys.clear();
+        keyChars.clear();
     }
 
     static function previousTest():Void {
@@ -135,6 +247,10 @@ class Test {
         if (currentTest < 0) currentTest = tests.length - 1;
         tests[currentTest].setup();
         updateTestInfo();
+
+        // Clear all key states to prevent stuck keys
+        keys.clear();
+        keyChars.clear();
     }
 
     static function updateTestInfo():Void {
@@ -352,7 +468,7 @@ class CollisionTest extends TestCase {
     public function new(world:World) {
         super(world);
         name = "Basic Collision";
-        description = "Use WASD to move the blue box. Red wall is immovable.";
+        description = "Use arrow keys to move the blue box. Red wall is immovable.";
     }
 
     override public function setup():Void {
@@ -367,16 +483,17 @@ class CollisionTest extends TestCase {
         // Immovable wall
         wall = new Body(400, 200, 32, 200);
         wall.immovable = true;
+        wall.allowGravity = false;
         bodies.push(wall);
     }
 
     override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
-        // Player movement (WASD)
-        if (Test.isKeyPressed("a")) player.velocityX = -200;
-        else if (Test.isKeyPressed("d")) player.velocityX = 200;
+        // Player movement (Arrow keys)
+        if (keys.get(37)) player.velocityX = -200; // Left arrow
+        else if (keys.get(39)) player.velocityX = 200; // Right arrow
 
-        if (Test.isKeyPressed("w")) player.velocityY = -200;
-        else if (Test.isKeyPressed("s")) player.velocityY = 200;
+        if (keys.get(38)) player.velocityY = -200; // Up arrow
+        else if (keys.get(40)) player.velocityY = 200; // Down arrow
 
         // Physics update
         player.preUpdate(world, player.x, player.y, player.width, player.height, player.rotation);
@@ -404,7 +521,7 @@ class GroupCollisionTest extends TestCase {
     public function new(world:World) {
         super(world);
         name = "Group Collision";
-        description = "WASD to move, SPACE to shoot. Destroy all red enemies!";
+        description = "Arrow keys to move, SPACE to shoot. Destroy all red enemies!";
     }
 
     override public function setup():Void {
@@ -426,6 +543,7 @@ class GroupCollisionTest extends TestCase {
             for (j in 0...3) {
                 var enemy = new Body(200 + i * 80, 50 + j * 60, 40, 40);
                 enemy.immovable = true;
+                enemy.allowGravity = false;
                 bodies.push(enemy);
                 enemies.add(enemy);
             }
@@ -436,12 +554,12 @@ class GroupCollisionTest extends TestCase {
         shootTimer -= delta;
 
         // Player movement
-        if (Test.isKeyPressed("a")) player.velocityX = -300;
-        else if (Test.isKeyPressed("d")) player.velocityX = 300;
+        if (keys.get(37)) player.velocityX = -300; // Left arrow
+        else if (keys.get(39)) player.velocityX = 300; // Right arrow
         else player.velocityX = 0;
 
-        if (Test.isKeyPressed("w")) player.velocityY = -300;
-        else if (Test.isKeyPressed("s")) player.velocityY = 300;
+        if (keys.get(38)) player.velocityY = -300; // Up arrow
+        else if (keys.get(40)) player.velocityY = 300; // Down arrow
         else player.velocityY = 0;
 
         // Shooting
@@ -512,6 +630,7 @@ class CircleCollisionTest extends TestCase {
         // Create ground rectangle
         rectangle = new Body(200, 400, 400, 40);
         rectangle.immovable = true;
+        rectangle.allowGravity = false;
         bodies.push(rectangle);
 
         // Create some circles
@@ -571,11 +690,11 @@ class PlatformerTest extends TestCase {
     public function new(world:World) {
         super(world);
         name = "Platformer Test";
-        description = "A/D to move, W to jump. Basic platformer mechanics.";
+        description = "Left/Right arrows to move, Up arrow to jump. Basic platformer mechanics.";
     }
 
     override public function setup():Void {
-        world.gravityY = 800;
+        world.gravityY = 1200;
 
         // Player
         player = new Body(100, 400, 32, 48);
@@ -591,22 +710,26 @@ class PlatformerTest extends TestCase {
         // Ground
         var ground = new Body(400, 550, 800, 50);
         ground.immovable = true;
+        ground.allowGravity = false;
         bodies.push(ground);
         platforms.add(ground);
 
         // Floating platforms
         var plat1 = new Body(200, 400, 150, 20);
         plat1.immovable = true;
+        plat1.allowGravity = false;
         bodies.push(plat1);
         platforms.add(plat1);
 
         var plat2 = new Body(450, 300, 150, 20);
         plat2.immovable = true;
+        plat2.allowGravity = false;
         bodies.push(plat2);
         platforms.add(plat2);
 
         var plat3 = new Body(250, 200, 100, 20);
         plat3.immovable = true;
+        plat3.allowGravity = false;
         bodies.push(plat3);
         platforms.add(plat3);
     }
@@ -617,15 +740,15 @@ class PlatformerTest extends TestCase {
         onGround = player.blockedDown;
 
         // Horizontal movement
-        if (Test.isKeyPressed("a")) {
+        if (keys.get(37)) { // Left arrow
             player.velocityX = -200;
-        } else if (Test.isKeyPressed("d")) {
+        } else if (keys.get(39)) { // Right arrow
             player.velocityX = 200;
         }
 
         // Jump
-        if (Test.isKeyPressed("w") && onGround) {
-            player.velocityY = -400;
+        if (keys.get(38) && onGround) { // Up arrow
+            player.velocityY = -600;
         }
 
         // Pre-update
@@ -675,6 +798,7 @@ class AngularMotionTest extends TestCase {
             spinner.angularVelocity = 30 + i * 60; // Different speeds
             spinner.angularDrag = i * 20; // Different drag
             spinner.immovable = true;
+            spinner.allowGravity = false;
             bodies.push(spinner);
             spinners.push(spinner);
         }
@@ -775,7 +899,7 @@ class OneWayPlatformTest extends TestCase {
     public function new(world:World) {
         super(world);
         name = "One-Way Platforms";
-        description = "A/D to move, W to jump. S to drop through platforms.";
+        description = "Left/Right arrows to move, Up arrow to jump. Down arrow to drop through platforms.";
     }
 
     override public function setup():Void {
@@ -795,6 +919,7 @@ class OneWayPlatformTest extends TestCase {
         for (i in 0...4) {
             var plat = new Body(200 + (i % 2) * 200, 150 + i * 100, 200, 10);
             plat.immovable = true;
+            plat.allowGravity = false;
             plat.data = { oneWay: true }; // Mark as one-way
             bodies.push(plat);
             platforms.add(plat);
@@ -805,12 +930,12 @@ class OneWayPlatformTest extends TestCase {
         var onGround = player.blockedDown;
 
         // Movement
-        if (Test.isKeyPressed("a")) player.velocityX = -200;
-        else if (Test.isKeyPressed("d")) player.velocityX = 200;
+        if (keys.get(37)) player.velocityX = -200; // Left arrow
+        else if (keys.get(39)) player.velocityX = 200; // Right arrow
 
-        if (Test.isKeyPressed("w") && onGround) player.velocityY = -400; // Jump
+        if (keys.get(38) && onGround) player.velocityY = -400; // Jump (Up arrow)
 
-        var dropThrough = Test.isKeyPressed("s"); // Drop through
+        var dropThrough = keys.get(40); // Drop through (Down arrow)
 
         // Pre-update
         player.preUpdate(world, player.x, player.y, player.width, player.height, player.rotation);
