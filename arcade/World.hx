@@ -664,8 +664,8 @@ class World {
     {
 
         if (
-            !body1.enable ||
-            !body2.enable ||
+            body1 == null || !body1.enable ||
+            body2 == null || !body2.enable ||
             body1.checkCollisionNone ||
             body2.checkCollisionNone ||
             !this.intersects(body1, body2))
