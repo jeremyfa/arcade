@@ -1184,7 +1184,6 @@ class World {
      */
     function separateX(body1:Body, body2:Body, overlapOnly:Bool):Bool
     {
-
         var overlap = this.getOverlapX(body1, body2, overlapOnly);
 
         //  Can't separate two immovable bodies, or a body with its own custom separation logic
@@ -1205,15 +1204,13 @@ class World {
             body1.x -= overlap;
             body2.x += overlap;
 
-            var nv1 = Math.sqrt((v2 * v2 * body2.mass) / body1.mass) * ((v2 > 0) ? 1 : -1);
-            var nv2 = Math.sqrt((v1 * v1 * body1.mass) / body2.mass) * ((v1 > 0) ? 1 : -1);
-            var avg = (nv1 + nv2) * 0.5;
+            // Use conservation of momentum formula (same as used for circles)
+            var totalMass = body1.mass + body2.mass;
+            var nv1 = ((body1.mass - body2.mass) * v1 + 2 * body2.mass * v2) / totalMass;
+            var nv2 = (2 * body1.mass * v1 + (body2.mass - body1.mass) * v2) / totalMass;
 
-            nv1 -= avg;
-            nv2 -= avg;
-
-            body1.velocityX = avg + nv1 * body1.bounceX;
-            body2.velocityX = avg + nv2 * body2.bounceX;
+            body1.velocityX = nv1 * body1.bounceX;
+            body2.velocityX = nv2 * body2.bounceX;
         }
         else if (!body1.immovable)
         {
@@ -1240,7 +1237,6 @@ class World {
 
         //  If we got this far then there WAS overlap, and separation is complete, so return true
         return true;
-
     }
 
     /**
@@ -1253,7 +1249,6 @@ class World {
      */
     function separateY(body1:Body, body2:Body, overlapOnly:Bool):Bool
     {
-
         var overlap = this.getOverlapY(body1, body2, overlapOnly);
 
         //  Can't separate two immovable bodies, or a body with its own custom separation logic
@@ -1274,15 +1269,13 @@ class World {
             body1.y -= overlap;
             body2.y += overlap;
 
-            var nv1 = Math.sqrt((v2 * v2 * body2.mass) / body1.mass) * ((v2 > 0) ? 1 : -1);
-            var nv2 = Math.sqrt((v1 * v1 * body1.mass) / body2.mass) * ((v1 > 0) ? 1 : -1);
-            var avg = (nv1 + nv2) * 0.5;
+            // Use conservation of momentum formula (same as used for circles)
+            var totalMass = body1.mass + body2.mass;
+            var nv1 = ((body1.mass - body2.mass) * v1 + 2 * body2.mass * v2) / totalMass;
+            var nv2 = (2 * body1.mass * v1 + (body2.mass - body1.mass) * v2) / totalMass;
 
-            nv1 -= avg;
-            nv2 -= avg;
-
-            body1.velocityY = avg + nv1 * body1.bounceY;
-            body2.velocityY = avg + nv2 * body2.bounceY;
+            body1.velocityY = nv1 * body1.bounceY;
+            body2.velocityY = nv2 * body2.bounceY;
         }
         else if (!body1.immovable)
         {
@@ -1309,7 +1302,6 @@ class World {
 
         //  If we got this far then there WAS overlap, and separation is complete, so return true
         return true;
-
     }
 
     /**
