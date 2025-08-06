@@ -2,6 +2,8 @@
 
 An arcade-oriented physics engine for Haxe - a framework-agnostic port of [Phaser v2 arcade physics](https://phaser.io/examples/v2/category/arcade-physics).
 
+Online demo: https://jeremyfa.github.io/arcade/
+
 ## Features
 
 - **Fast 2D arcade physics** - Optimized for performance with AABB collision detection
