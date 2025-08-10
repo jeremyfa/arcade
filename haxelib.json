@@ -15,7 +15,6 @@
     ],
     "description": "Arcade-oriented physics engine for Haxe - framework-agnostic port of Phaser v2 arcade physics",
     "version": "1.0.0",
-    "classPath": "./",
     "releasenote": "Initial release",
     "contributors": ["jeremyfa"],
     "dependencies": {}
