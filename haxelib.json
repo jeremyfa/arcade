@@ -1,0 +1,22 @@
+{
+    "name": "arcade",
+    "url": "https://github.com/jeremyfa/arcade",
+    "license": "MIT",
+    "tags": [
+        "physics",
+        "arcade",
+        "2d",
+        "collision",
+        "game",
+        "phaser",
+        "aabb",
+        "quadtree",
+        "framework-agnostic"
+    ],
+    "description": "Arcade-oriented physics engine for Haxe - framework-agnostic port of Phaser v2 arcade physics",
+    "version": "1.0.0",
+    "classPath": "./",
+    "releasenote": "Initial release",
+    "contributors": ["jeremyfa"],
+    "dependencies": {}
+}
