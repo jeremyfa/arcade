@@ -88,7 +88,15 @@ class Test {
             new VelocityDragTest(world),
             new OneWayPlatformTest(world),
             new QuadTreeTest(world),
-            new MassCollisionTest(world)
+            new MassCollisionTest(world),
+            new AccelerateToPointerTest(world),
+            new LauncherTest(world),
+            new SnakeTest(world),
+            new BodyEnableTest(world),
+            new AsteroidsMovementTest(world),
+            new MultiballTest(world),
+            new ProcessCallbackTest(world),
+            new WorldBoundsEventTest(world)
         ];
     }
 
@@ -204,8 +212,8 @@ class Test {
             }
         });
 
-        // Mouse events
-        canvas.addEventListener("mousemove", function(e:MouseEvent) {
+        // Mouse events - use document for tracking outside canvas
+        Browser.document.addEventListener("mousemove", function(e:MouseEvent) {
             var rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
@@ -216,7 +224,8 @@ class Test {
             canvas.focus(); // Ensure canvas has focus when clicked
         });
 
-        canvas.addEventListener("mouseup", function(e:MouseEvent) {
+        // Use document for mouseup to catch releases outside canvas
+        Browser.document.addEventListener("mouseup", function(e:MouseEvent) {
             mouseDown = false;
         });
 
@@ -230,6 +239,11 @@ class Test {
         if (tests.length == 0) return;
 
         tests[currentTest].cleanup();
+        
+        // Reset world to default state
+        world.gravityX = 0;
+        world.gravityY = 0;
+        
         currentTest = (currentTest + 1) % tests.length;
         tests[currentTest].setup();
         updateTestInfo();
@@ -237,12 +251,18 @@ class Test {
         // Clear all key states to prevent stuck keys
         keys.clear();
         keyChars.clear();
+        mouseDown = false;
     }
 
     static function previousTest():Void {
         if (tests.length == 0) return;
 
         tests[currentTest].cleanup();
+        
+        // Reset world to default state
+        world.gravityX = 0;
+        world.gravityY = 0;
+        
         currentTest--;
         if (currentTest < 0) currentTest = tests.length - 1;
         tests[currentTest].setup();
@@ -251,6 +271,7 @@ class Test {
         // Clear all key states to prevent stuck keys
         keys.clear();
         keyChars.clear();
+        mouseDown = false;
     }
 
     static function updateTestInfo():Void {
@@ -324,6 +345,8 @@ class TestCase {
         }
         bodies = [];
         groups = [];
+        
+        // Clear any test-specific arrays (will be overridden in subclasses if needed)
     }
 
     public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
@@ -1134,5 +1157,837 @@ class MassCollisionTest extends TestCase {
         for (light in lightBodies) {
             renderBody(ctx, light, "#44ff44");
         }
+    }
+}
+
+// Test: Accelerate to pointer
+class AccelerateToPointerTest extends TestCase {
+    var arrow:Body;
+    var targetX:Float = 400;
+    var targetY:Float = 300;
+
+    public function new(world:World) {
+        super(world);
+        name = "Accelerate to Pointer";
+        description = "Arrow accelerates towards mouse position. Click to set target.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 0;
+        
+        arrow = new Body(400, 300, 48, 16);
+        arrow.dragX = 100;
+        arrow.dragY = 100;
+        arrow.maxVelocityX = 300;
+        arrow.maxVelocityY = 300;
+        bodies.push(arrow);
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        if (mouseDown) {
+            targetX = mouseX;
+            targetY = mouseY;
+        }
+
+        // Calculate angle to target
+        var dx = targetX - (arrow.x + arrow.width / 2);
+        var dy = targetY - (arrow.y + arrow.height / 2);
+        var angle = Math.atan2(dy, dx);
+        
+        // Set rotation to face target
+        arrow.rotation = angle * 180 / Math.PI;
+        
+        // Accelerate towards target
+        var speed = 500;
+        arrow.accelerationX = Math.cos(angle) * speed;
+        arrow.accelerationY = Math.sin(angle) * speed;
+
+        // Stop when close to target
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 50) {
+            arrow.accelerationX = 0;
+            arrow.accelerationY = 0;
+        }
+
+        super.update(delta, keys, mouseX, mouseY, mouseDown);
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        super.render(ctx);
+        
+        // Draw target
+        ctx.strokeStyle = "#ff0000";
+        ctx.beginPath();
+        ctx.arc(targetX, targetY, 20, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(targetX - 10, targetY);
+        ctx.lineTo(targetX + 10, targetY);
+        ctx.moveTo(targetX, targetY - 10);
+        ctx.lineTo(targetX, targetY + 10);
+        ctx.stroke();
+    }
+}
+
+// Test: Launcher
+class LauncherTest extends TestCase {
+    var projectiles:Array<Body> = [];
+    var launcher:Body;
+    var isDragging:Bool = false;
+    var dragStartX:Float = 0;
+    var dragStartY:Float = 0;
+    var currentMouseX:Float = 0;
+    var currentMouseY:Float = 0;
+
+    public function new(world:World) {
+        super(world);
+        name = "Launcher";
+        description = "Click and drag from the green launcher to launch projectiles.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 500;
+        
+        // Launcher base - positioned further from edges
+        launcher = new Body(200, 450, 40, 40);
+        launcher.immovable = true;
+        launcher.allowGravity = false;
+        bodies.push(launcher);
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        projectiles = [];
+        isDragging = false;
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Save current mouse position
+        currentMouseX = mouseX;
+        currentMouseY = mouseY;
+        
+        // Handle launcher drag
+        if (mouseDown) {
+            var dx = mouseX - (launcher.x + launcher.width / 2);
+            var dy = mouseY - (launcher.y + launcher.height / 2);
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (!isDragging && dist < 50) {
+                isDragging = true;
+                dragStartX = launcher.x + launcher.width / 2;
+                dragStartY = launcher.y + launcher.height / 2;
+            }
+        } else if (isDragging) {
+            // Launch projectile
+            var ball = new Body(launcher.x + 10, launcher.y + 10, 20, 20);
+            ball.velocityX = (dragStartX - mouseX) * 3;
+            ball.velocityY = (dragStartY - mouseY) * 3;
+            ball.bounceX = 0.8;
+            ball.bounceY = 0.8;
+            ball.collideWorldBounds = true;
+            ball.setCircle(10);
+            
+            bodies.push(ball);
+            projectiles.push(ball);
+            
+            // Limit projectiles
+            if (projectiles.length > 10) {
+                var old = projectiles.shift();
+                bodies.remove(old);
+            }
+            
+            isDragging = false;
+        }
+
+        // Update physics
+        for (body in bodies) {
+            body.preUpdate(world, body.x, body.y, body.width, body.height, body.rotation);
+        }
+
+        // Projectile collisions
+        for (i in 0...projectiles.length) {
+            for (j in i + 1...projectiles.length) {
+                world.collide(projectiles[i], projectiles[j]);
+            }
+        }
+
+        for (body in bodies) {
+            body.postUpdate(world);
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        // Render launcher
+        renderBody(ctx, launcher, "#44ff44");
+        
+        // Render projectiles
+        for (proj in projectiles) {
+            renderBody(ctx, proj, "#ffaa44");
+        }
+        
+        // Draw launch trajectory preview
+        if (isDragging) {
+            ctx.strokeStyle = "#ff0000";
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(dragStartX, dragStartY);
+            
+            var steps = 20;
+            var vx = (dragStartX - currentMouseX) * 3;
+            var vy = (dragStartY - currentMouseY) * 3;
+            var px = dragStartX;
+            var py = dragStartY;
+            
+            for (i in 0...steps) {
+                vy += world.gravityY * 0.016; // Approximate gravity effect
+                px += vx * 0.016;
+                py += vy * 0.016;
+                ctx.lineTo(px, py);
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+}
+
+// Test: Snake movement
+class SnakeTest extends TestCase {
+    var snakeHead:Body;
+    var snakeSegments:Array<Body> = [];
+    var snakePath:Array<{x:Float, y:Float}> = [];
+    var segmentSpacing:Int = 15;
+    var numSegments:Int = 10;
+
+    public function new(world:World) {
+        super(world);
+        name = "Snake Movement";
+        description = "Use arrow keys to control the snake. Segments follow the head.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 0;
+        
+        // Create snake head
+        snakeHead = new Body(400, 300, 20, 20);
+        snakeHead.setCircle(10);
+        snakeHead.dragX = 200;
+        snakeHead.dragY = 200;
+        bodies.push(snakeHead);
+        
+        // Create segments
+        for (i in 0...numSegments) {
+            var segment = new Body(400 - (i + 1) * segmentSpacing, 300, 16, 16);
+            segment.setCircle(8);
+            segment.allowGravity = false;
+            bodies.push(segment);
+            snakeSegments.push(segment);
+        }
+        
+        // Initialize path
+        for (i in 0...(numSegments + 1) * segmentSpacing) {
+            snakePath.push({x: 400, y: 300});
+        }
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        snakeSegments = [];
+        snakePath = [];
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Control snake head
+        if (keys.get(37)) snakeHead.velocityX = -200; // Left
+        else if (keys.get(39)) snakeHead.velocityX = 200; // Right
+        else snakeHead.velocityX *= 0.9;
+        
+        if (keys.get(38)) snakeHead.velocityY = -200; // Up
+        else if (keys.get(40)) snakeHead.velocityY = 200; // Down
+        else snakeHead.velocityY *= 0.9;
+
+        // Update head
+        snakeHead.preUpdate(world, snakeHead.x, snakeHead.y, snakeHead.width, snakeHead.height, snakeHead.rotation);
+        snakeHead.postUpdate(world);
+        
+        // Update path (only when moving)
+        if (Math.abs(snakeHead.velocityX) > 10 || Math.abs(snakeHead.velocityY) > 10) {
+            snakePath.pop();
+            snakePath.unshift({x: snakeHead.x, y: snakeHead.y});
+        }
+        
+        // Update segments to follow path
+        for (i in 0...snakeSegments.length) {
+            var pathIndex = (i + 1) * segmentSpacing;
+            if (pathIndex < snakePath.length) {
+                var segment = snakeSegments[i];
+                segment.x = snakePath[pathIndex].x;
+                segment.y = snakePath[pathIndex].y;
+            }
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        // Render segments (darker to lighter)
+        for (i in 0...snakeSegments.length) {
+            var brightness = 30 + (i / snakeSegments.length) * 40;
+            renderBody(ctx, snakeSegments[snakeSegments.length - 1 - i], 'hsl(120, 70%, ${brightness}%)');
+        }
+        
+        // Render head
+        renderBody(ctx, snakeHead, "#44ff44");
+    }
+}
+
+// Test: Body enable/disable
+class BodyEnableTest extends TestCase {
+    var fallingBodies:Array<Body> = [];
+    var platform:Body;
+
+    public function new(world:World) {
+        super(world);
+        name = "Body Enable";
+        description = "Bodies disable on collision with platform. Click to re-enable all.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 400;
+        
+        // Platform
+        platform = new Body(200, 400, 400, 20);
+        platform.immovable = true;
+        platform.allowGravity = false;
+        bodies.push(platform);
+        
+        // Create falling bodies
+        for (i in 0...8) {
+            var body = new Body(250 + i * 40, 50 + Math.random() * 100, 30, 30);
+            body.bounceY = 0.5;
+            body.setCircle(15);
+            bodies.push(body);
+            fallingBodies.push(body);
+        }
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        fallingBodies = [];
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Re-enable all on click
+        if (mouseDown) {
+            for (body in fallingBodies) {
+                body.enable = true;
+                body.y = 50 + Math.random() * 100;
+                body.velocityY = 0;
+            }
+        }
+
+        // Pre-update
+        for (body in bodies) {
+            if (body.enable) {
+                body.preUpdate(world, body.x, body.y, body.width, body.height, body.rotation);
+            }
+        }
+
+        // Collision with disable callback
+        for (falling in fallingBodies) {
+            if (falling.enable) {
+                world.collide(falling, platform, function(f:Body, p:Body) {
+                    // Disable body after bounce
+                    if (f.velocityY < 50) {
+                        f.enable = false;
+                    }
+                });
+            }
+        }
+
+        // Post-update
+        for (body in bodies) {
+            if (body.enable) {
+                body.postUpdate(world);
+            }
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        renderBody(ctx, platform, "#666666");
+        
+        for (body in fallingBodies) {
+            if (body.enable) {
+                renderBody(ctx, body, "#44ff44");
+            } else {
+                renderBody(ctx, body, "#ff4444");
+            }
+        }
+    }
+}
+
+// Test: Asteroids movement
+class AsteroidsMovementTest extends TestCase {
+    var ship:Body;
+    var asteroids:Array<Body> = [];
+    var thrust:Float = 0;
+
+    public function new(world:World) {
+        super(world);
+        name = "Asteroids Movement";
+        description = "Arrow keys to rotate, UP to thrust. Classic asteroids-style movement.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 0;
+        
+        // Ship - using smaller hitbox for triangle shape
+        ship = new Body(400, 300, 20, 25);
+        ship.dragX = 50;
+        ship.dragY = 50;
+        ship.maxVelocityX = 300;
+        ship.maxVelocityY = 300;
+        ship.angularDrag = 100;
+        bodies.push(ship);
+        
+        // Create asteroids
+        for (i in 0...5) {
+            var asteroid = new Body(
+                100 + Math.random() * 600,
+                100 + Math.random() * 400,
+                40 + Math.random() * 40,
+                40 + Math.random() * 40
+            );
+            asteroid.velocityX = -50 + Math.random() * 100;
+            asteroid.velocityY = -50 + Math.random() * 100;
+            asteroid.angularVelocity = -100 + Math.random() * 200;
+            asteroid.bounceX = 1;
+            asteroid.bounceY = 1;
+            asteroid.collideWorldBounds = true;
+            asteroid.setCircle(asteroid.width / 2);
+            bodies.push(asteroid);
+            asteroids.push(asteroid);
+        }
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        asteroids = [];
+        thrust = 0;
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Ship controls
+        if (keys.get(37)) ship.angularVelocity = -200; // Left
+        else if (keys.get(39)) ship.angularVelocity = 200; // Right
+        else ship.angularVelocity *= 0.9;
+        
+        thrust = 0;
+        if (keys.get(38)) { // Up - thrust
+            thrust = 300;
+            var angle = (ship.rotation - 90) * Math.PI / 180;
+            ship.accelerationX = Math.cos(angle) * thrust;
+            ship.accelerationY = Math.sin(angle) * thrust;
+        } else {
+            ship.accelerationX = 0;
+            ship.accelerationY = 0;
+        }
+
+        // Wrap ship around screen
+        if (ship.x < -ship.width) ship.x = 800;
+        if (ship.x > 800) ship.x = -ship.width;
+        if (ship.y < -ship.height) ship.y = 600;
+        if (ship.y > 600) ship.y = -ship.height;
+
+        // Pre-update
+        for (body in bodies) {
+            body.preUpdate(world, body.x, body.y, body.width, body.height, body.rotation);
+        }
+
+        // Collisions
+        for (asteroid in asteroids) {
+            world.collide(ship, asteroid);
+        }
+        
+        for (i in 0...asteroids.length) {
+            for (j in i + 1...asteroids.length) {
+                world.collide(asteroids[i], asteroids[j]);
+            }
+        }
+
+        // Post-update
+        for (body in bodies) {
+            body.postUpdate(world);
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        // Render asteroids
+        for (asteroid in asteroids) {
+            renderBody(ctx, asteroid, "#8B4513");
+        }
+        
+        // Render ship with custom triangle shape
+        ctx.save();
+        ctx.translate(ship.x + ship.width / 2, ship.y + ship.height / 2);
+        ctx.rotate(ship.rotation * Math.PI / 180);
+        
+        ctx.fillStyle = "#00ff00";
+        ctx.beginPath();
+        ctx.moveTo(0, -15);
+        ctx.lineTo(-10, 15);
+        ctx.lineTo(10, 15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw thrust flame
+        if (thrust > 0) {
+            ctx.fillStyle = "#ff6600";
+            ctx.beginPath();
+            ctx.moveTo(-5, 15);
+            ctx.lineTo(0, 25 + Math.random() * 5);
+            ctx.lineTo(5, 15);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        ctx.restore();
+    }
+}
+
+// Test: Multiball with different properties
+class MultiballTest extends TestCase {
+    var balls:Array<Body> = [];
+
+    public function new(world:World) {
+        super(world);
+        name = "Multiball";
+        description = "Many balls with varying mass, bounce, and drag. Click to add more.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 500;
+        
+        // Create initial balls with different properties
+        for (i in 0...10) {
+            createBall(100 + Math.random() * 600, 50 + Math.random() * 200);
+        }
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        balls = [];
+    }
+    
+    function createBall(x:Float, y:Float):Void {
+        var size = 10 + Math.random() * 30;
+        var ball = new Body(x, y, size * 2, size * 2);
+        ball.setCircle(size);
+        ball.mass = size / 20; // Mass proportional to size
+        ball.bounceX = 0.5 + Math.random() * 0.5;
+        ball.bounceY = 0.5 + Math.random() * 0.5;
+        ball.dragX = Math.random() * 50;
+        ball.velocityX = -200 + Math.random() * 400;
+        ball.velocityY = Math.random() * 200;
+        ball.collideWorldBounds = true;
+        
+        bodies.push(ball);
+        balls.push(ball);
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Add ball on click
+        if (mouseDown && balls.length < 50) {
+            createBall(mouseX, mouseY);
+        }
+
+        // Pre-update
+        for (ball in balls) {
+            ball.preUpdate(world, ball.x, ball.y, ball.width, ball.height, ball.rotation);
+        }
+
+        // Ball collisions
+        for (i in 0...balls.length) {
+            for (j in i + 1...balls.length) {
+                world.collide(balls[i], balls[j]);
+            }
+        }
+
+        // Post-update
+        for (ball in balls) {
+            ball.postUpdate(world);
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        for (ball in balls) {
+            // Color based on mass
+            var hue = (ball.mass * 120) % 360;
+            renderBody(ctx, ball, 'hsl($hue, 70%, 50%)');
+        }
+        
+        ctx.fillStyle = "#fff";
+        ctx.font = "12px Arial";
+        ctx.fillText('Balls: ${balls.length}/50', 10, 20);
+    }
+}
+
+// Test: Process callback
+class ProcessCallbackTest extends TestCase {
+    var player:Body;
+    var oneWayPlatforms:Array<Body> = [];
+    var solidPlatform:Body;
+    var platformStates:Map<Body, {willCollide:Bool, overlapping:Bool}> = new Map();
+
+    public function new(world:World) {
+        super(world);
+        name = "Process Callback";
+        description = "Jump with UP arrow. One-way platforms only collide from above. Red = ignored, Green = will collide.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 600;
+        
+        // Player
+        player = new Body(400, 100, 32, 32);
+        player.bounceY = 0;
+        player.dragX = 500;
+        player.collideWorldBounds = true;
+        bodies.push(player);
+        
+        // Solid platform
+        solidPlatform = new Body(200, 500, 400, 20);
+        solidPlatform.immovable = true;
+        solidPlatform.allowGravity = false;
+        bodies.push(solidPlatform);
+        
+        // One-way platforms
+        for (i in 0...3) {
+            var platform = new Body(150 + i * 200, 350 - i * 50, 150, 10);
+            platform.immovable = true;
+            platform.allowGravity = false;
+            bodies.push(platform);
+            oneWayPlatforms.push(platform);
+            platformStates.set(platform, {willCollide: false, overlapping: false});
+        }
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        oneWayPlatforms = [];
+        platformStates.clear();
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Player movement
+        if (keys.get(37)) player.velocityX = -200;
+        else if (keys.get(39)) player.velocityX = 200;
+        
+        // Jump with UP arrow (higher jump to reach platforms)
+        if (keys.get(38) && player.blockedDown) {
+            player.velocityY = -500;
+        }
+
+        // Pre-update
+        for (body in bodies) {
+            body.preUpdate(world, body.x, body.y, body.width, body.height, body.rotation);
+        }
+
+        // Solid platform collision
+        world.collide(player, solidPlatform);
+        
+        // One-way platform collision with process callback
+        for (platform in oneWayPlatforms) {
+            // First check if bodies are overlapping
+            var overlapping = world.overlap(player, platform);
+            var state = platformStates.get(platform);
+            state.overlapping = overlapping;
+            
+            if (overlapping) {
+                // Check if collision would be processed
+                state.willCollide = player.y < platform.y && player.velocityY > 0;
+            } else {
+                state.willCollide = false;
+            }
+            
+            // Perform actual collision
+            world.collide(player, platform, null, function(p:Body, plat:Body):Bool {
+                // Only collide if player is above and falling
+                return p.y < plat.y && p.velocityY > 0;
+            });
+        }
+
+        // Post-update
+        for (body in bodies) {
+            body.postUpdate(world);
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        renderBody(ctx, player, "#4444ff");
+        renderBody(ctx, solidPlatform, "#666666");
+        
+        for (platform in oneWayPlatforms) {
+            var state = platformStates.get(platform);
+            
+            ctx.save();
+            
+            if (state.overlapping) {
+                if (state.willCollide) {
+                    // Green glow when collision will happen
+                    ctx.shadowColor = "#44ff44";
+                    ctx.shadowBlur = 20;
+                    ctx.strokeStyle = "#44ff44";
+                    ctx.lineWidth = 3;
+                    ctx.fillStyle = "rgba(68, 255, 68, 0.6)";
+                } else {
+                    // Red glow when collision is ignored
+                    ctx.shadowColor = "#ff4444";
+                    ctx.shadowBlur = 20;
+                    ctx.strokeStyle = "#ff4444";
+                    ctx.lineWidth = 3;
+                    ctx.fillStyle = "rgba(255, 68, 68, 0.3)";
+                }
+            } else {
+                // Default appearance when not overlapping
+                ctx.strokeStyle = "#44ff44";
+                ctx.lineWidth = 2;
+                ctx.fillStyle = "rgba(68, 255, 68, 0.2)";
+            }
+            
+            // Draw platform
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            
+            ctx.restore();
+            
+            // Draw arrow indicator for one-way direction
+            ctx.save();
+            ctx.fillStyle = state.overlapping ? (state.willCollide ? "#44ff44" : "#ff4444") : "#888888";
+            ctx.font = "16px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("↓", platform.x + platform.width / 2, platform.y - 5);
+            ctx.restore();
+        }
+        
+        // Show collision state info
+        ctx.fillStyle = "#000";
+        ctx.font = "12px Arial";
+        ctx.fillText("Platform states: Green = will collide, Red = ignored", 10, 20);
+    }
+}
+
+// Test: World bounds event
+class WorldBoundsEventTest extends TestCase {
+    var bouncingBalls:Array<Body> = [];
+    var hitEdges:Map<Body, String> = new Map();
+    var hitTimer:Map<Body, Float> = new Map();
+
+    public function new(world:World) {
+        super(world);
+        name = "World Bounds Event";
+        description = "Balls flash when hitting world edges. Shows which edge was hit.";
+    }
+
+    override public function setup():Void {
+        world.gravityY = 300;
+        
+        // Create bouncing balls
+        for (i in 0...5) {
+            var ball = new Body(
+                200 + Math.random() * 400,
+                100 + Math.random() * 200,
+                40, 40
+            );
+            ball.setCircle(20);
+            ball.velocityX = -300 + Math.random() * 600;
+            ball.velocityY = -200 + Math.random() * 400;
+            ball.bounceX = 0.9;
+            ball.bounceY = 0.9;
+            ball.collideWorldBounds = true;
+            
+            bodies.push(ball);
+            bouncingBalls.push(ball);
+            hitTimer.set(ball, 0);
+        }
+    }
+    
+    override public function cleanup():Void {
+        super.cleanup();
+        bouncingBalls = [];
+        hitEdges.clear();
+        hitTimer.clear();
+    }
+
+    override public function update(delta:Float, keys:Map<Int, Bool>, mouseX:Float, mouseY:Float, mouseDown:Bool):Void {
+        // Update hit timers
+        for (ball in bouncingBalls) {
+            if (hitTimer.get(ball) > 0) {
+                hitTimer.set(ball, hitTimer.get(ball) - delta);
+            }
+        }
+
+        // Pre-update
+        for (ball in bouncingBalls) {
+            ball.preUpdate(world, ball.x, ball.y, ball.width, ball.height, ball.rotation);
+        }
+
+        // Ball to ball collisions
+        for (i in 0...bouncingBalls.length) {
+            for (j in i + 1...bouncingBalls.length) {
+                world.collide(bouncingBalls[i], bouncingBalls[j]);
+            }
+        }
+
+        // Post-update and check world bounds
+        for (ball in bouncingBalls) {
+            ball.postUpdate(world);
+            
+            // Check if hit world bounds
+            if (ball.blockedLeft) {
+                hitEdges.set(ball, "LEFT");
+                hitTimer.set(ball, 0.5);
+            } else if (ball.blockedRight) {
+                hitEdges.set(ball, "RIGHT");
+                hitTimer.set(ball, 0.5);
+            } else if (ball.blockedUp) {
+                hitEdges.set(ball, "TOP");
+                hitTimer.set(ball, 0.5);
+            } else if (ball.blockedDown) {
+                hitEdges.set(ball, "BOTTOM");
+                hitTimer.set(ball, 0.5);
+            }
+        }
+    }
+
+    override public function render(ctx:CanvasRenderingContext2D):Void {
+        for (ball in bouncingBalls) {
+            var timer = hitTimer.get(ball);
+            if (timer > 0) {
+                // Flash effect
+                var intensity = timer * 2; // 0-1
+                renderBody(ctx, ball, 'rgba(255, ${Math.floor(255 * (1 - intensity))}, ${Math.floor(255 * (1 - intensity))}, 1)');
+                
+                // Show edge hit - centered and smaller text
+                var edgeText = hitEdges.get(ball);
+                if (edgeText == "BOTTOM") edgeText = "BTM"; // Shorten BOTTOM to fit better
+                
+                ctx.fillStyle = "#fff";
+                ctx.font = "10px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(edgeText, ball.x + ball.width / 2, ball.y + ball.height / 2);
+                ctx.textAlign = "left";
+                ctx.textBaseline = "alphabetic";
+            } else {
+                renderBody(ctx, ball, "#4444ff");
+            }
+        }
+        
+        // Draw world bounds indicator
+        ctx.strokeStyle = "#666";
+        ctx.setLineDash([10, 5]);
+        ctx.strokeRect(1, 1, 798, 598);
+        ctx.setLineDash([]);
     }
 }
